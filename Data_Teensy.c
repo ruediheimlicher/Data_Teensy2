@@ -61,6 +61,10 @@ static volatile uint8_t testbuffer[USB_DATENBREITE]={};
 
 
 static volatile uint8_t buffer[USB_DATENBREITE]={};
+
+
+static volatile uint8_t recvbuffer[USB_DATENBREITE]={};
+
 static volatile uint8_t sendbuffer[USB_DATENBREITE]={};
 
 volatile uint8_t outbuffer[USB_DATENBREITE]={};
@@ -866,9 +870,11 @@ int main (void)
 
          lcd_gotoxy(0,1);
          lcd_putc('S');
-         lcd_puthex(sendbuffer[0]);
-         lcd_puthex(sendbuffer[1]);
-         lcd_puthex(sendbuffer[2]);
+         //lcd_putc(' ');
+          for (i=0;i<4;i++)
+          {
+             lcd_puthex(sendbuffer[i]);
+          }
 
          /*
          lcd_gotoxy(0,1);
@@ -998,7 +1004,7 @@ int main (void)
       
       
       
-      r = usb_rawhid_recv((void*)buffer, 0); // 5us
+      r = usb_rawhid_recv((void*)recvbuffer, 0); // 5us
       //OSZI_D_HI;
       // MARK: USB_READ
       
@@ -1016,13 +1022,16 @@ int main (void)
          //lcd_putc('*');
          //lcd_puthex(r);
          //lcd_putc('*');
-         lcd_putint2(usb_readcount);
+         //lcd_putint2(usb_readcount);
          lcd_putc('R');
          
-         lcd_puthex(buffer[0]);
-         lcd_puthex(buffer[1]);
-         lcd_puthex(buffer[2]);
-         lcd_puthex(buffer[3]);
+         lcd_puthex(recvbuffer[0]);
+         lcd_puthex(recvbuffer[1]);
+         lcd_puthex(recvbuffer[2]);
+         lcd_puthex(recvbuffer[3]);
+         
+         
+         
          lcd_putc('*');
          
 
@@ -1060,7 +1069,7 @@ int main (void)
          lcd_gotoxy(17,0);
          lcd_puthex(spi_txbuffer[0]);
         */
-         if (buffer[15] & (1<<7)) // SPI-CONTROL setzen. MASTER soll SPI abfragen
+         if (recvbuffer[15] & (1<<7)) // SPI-CONTROL setzen. MASTER soll SPI abfragen
          {
             spi_txbuffer[0] |= (1<<7);
  //           SPI_PORT &= ~(1<<SPI); // PIN setzen, um Master die Praesenz zu melden. Aktiv LO
@@ -1081,9 +1090,9 @@ int main (void)
 
          }
          
-         spi_txbuffer[1] = buffer[1];
-         spi_txbuffer[2] = buffer[2];
-         spi_txbuffer[3] = buffer[3];
+         spi_txbuffer[1] = recvbuffer[1];
+         spi_txbuffer[2] = recvbuffer[2];
+         spi_txbuffer[3] = recvbuffer[3];
          
          /*
          spi_txbuffer[0] = 0x81;
