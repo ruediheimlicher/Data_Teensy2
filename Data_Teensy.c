@@ -801,7 +801,6 @@ int main (void)
    volatile uint8_t versioninth = (versionint & 0xFF00)>>8;
    
    uint8_t anzeigecounter=0;
-   uint8_t ind = 32;
    
  //  masterstatus |= (1<<SUB_READ_EEPROM_BIT); // sub soll EE lesen
    
