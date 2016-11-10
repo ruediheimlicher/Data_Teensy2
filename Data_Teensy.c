@@ -17,6 +17,8 @@
 #include <inttypes.h>
 #include <avr/wdt.h>
 #include <math.h>
+#include <stdlib.h>
+
 
 #include "lcd.c"
 #include "adc.c"
@@ -30,6 +32,7 @@
 //#include "spi_slave.c"
 #include "soft_SPI.c"
 
+#include "ds18x20.c"
 
 // USB
 #define CPU_PRESCALE(n)	(CLKPR = 0x80, CLKPR = (n))
@@ -80,12 +83,11 @@ static volatile uint8_t eeprombuffer[USB_DATENBREITE]={};
 
 volatile uint8_t timer0startwert=TIMER0_STARTWERT;
 
-//volatile uint8_t rxbuffer[USB_DATENBREITE];
+volatile uint8_t rxbuffer[USB_DATENBREITE];
 
 /*Der Sendebuffer, der vom Master ausgelesen werden kann.*/
-//volatile uint8_t txbuffer[USB_DATENBREITE];
+volatile uint8_t txbuffer[USB_DATENBREITE];
 
-//uint16_t EEMEM Brennerlaufzeit;	// Akkumulierte Laufzeit
 
 void delay_ms(unsigned int ms);
 
@@ -100,13 +102,13 @@ volatile uint8_t                    out_taskcounter=0;
 
 
 
-static volatile uint8_t             substatus=0x00; // Tasks fuer Sub
+//static volatile uint8_t             substatus=0x00; // Tasks fuer Sub
 
 static volatile uint8_t             usbstatus=0x00;
 
 volatile uint8_t                    spistatus=0x00; // was ist zu tun infolge spi
 
-static volatile uint8_t             eepromstatus=0x00;
+//static volatile uint8_t             eepromstatus=0x00;
 static volatile uint8_t             potstatus=0x00; // Bit 7 gesetzt, Mittelwerte setzen
 static volatile uint8_t             impulscounter=0x00;
 
@@ -188,35 +190,12 @@ volatile    uint8_t task_outdata=0; // Taskdata an RC_PPM
 volatile uint16_t                TastaturCount=0;
 volatile uint16_t                manuellcounter=0; // Counter fuer Timeout
 volatile uint8_t                 startcounter=0; // timeout-counter beim Start von Settings, schneller als manuellcounter. Ermoeglicht Dreifachklick auf Taste 5
-volatile uint8_t                 settingstartcounter=0; // Counter fuer Klicks auf Taste 5
 volatile uint16_t                mscounter=0; // Counter fuer ms in timer-ISR
 volatile uint8_t                 blinkcounter=0;
 
-volatile uint16_t                TastenStatus=0;
-volatile uint16_t                Tastencount=0;
-volatile uint16_t                Tastenprellen=0x01F;
-volatile uint8_t                 Taste=0;
 
-volatile uint16_t                tastentransfer=0;
-
-volatile uint8_t                 Tastenindex=0;
-volatile uint8_t                 lastTastenindex=0;
-volatile uint16_t                prellcounter=0;
-
-volatile uint8_t                 trimmstatus=0;
-volatile uint8_t                 Trimmtaste=0;
-volatile uint8_t                 Trimmtastenindex=0;
-volatile uint8_t                 lastTrimmtastenindex=0;
-volatile uint16_t                trimmprellcounter=0;
-
-volatile uint16_t                manuelltrimmcounter=0; // Counter fuer Timeout der Trimmtsastatur
-
-
-volatile uint8_t                  vertikaltrimm_L=0;
-volatile uint8_t                  vertikaltrimm_R=0;
-volatile uint8_t                  horizontaltrimm_L=0;
-volatile uint8_t                  horizontaltrimm_R=0;
-
+uint8_t                          ServoimpulsSchrittweite=10;
+uint16_t                         Servoposition[]={1000,1250,1500,1750,2000,1750,1500,1250};
 
 
 
@@ -276,7 +255,102 @@ uint16_t get_key_press( uint16_t key_mask )
 */
 
 
+#pragma mark 1-wire
 
+//#define MAXSENSORS 2
+static uint8_t gSensorIDs[MAXSENSORS][OW_ROMCODE_SIZE];
+static int16_t gTempdata[MAXSENSORS]; // temperature times 10
+static uint8_t gTemp_measurementstatus=0; // 0=ok,1=error
+static int8_t gNsensors=0;
+
+uint8_t search_sensors(void)
+{
+   uint8_t i;
+   uint8_t id[OW_ROMCODE_SIZE];
+   uint8_t diff, nSensors;
+   
+   ow_reset();
+   
+   nSensors = 0;
+   
+   diff = OW_SEARCH_FIRST;
+   while ( diff != OW_LAST_DEVICE && nSensors < MAXSENSORS )
+   {
+      DS18X20_find_sensor( &diff, &id[0] );
+      
+      if( diff == OW_PRESENCE_ERR )
+      {
+         lcd_gotoxy(0,1);
+         lcd_puts("No Sensor found\0" );
+         
+         delay_ms(800);
+         lcd_clr_line(1);
+         break;
+      }
+      
+      if( diff == OW_DATA_ERR )
+      {
+         lcd_gotoxy(10,0);
+         lcd_puts("BusErr\0" );
+         lcd_puthex(diff);
+         return OW_DATA_ERR;
+         break;
+      }
+      //lcd_gotoxy(4,1);
+      
+      for ( i=0; i < OW_ROMCODE_SIZE; i++ )
+      {
+         //lcd_gotoxy(15,1);
+         //lcd_puthex(id[i]);
+         
+         gSensorIDs[nSensors][i] = id[i];
+         //delay_ms(100);
+      }
+      
+      nSensors++;
+   }
+   
+   return nSensors;
+}
+
+// start a measurement for all sensors on the bus:
+void start_temp_meas(void)
+{
+   
+   gTemp_measurementstatus=0;
+   if ( DS18X20_start_meas(NULL) != DS18X20_OK)
+   {
+      gTemp_measurementstatus=1;
+   }
+}
+
+// read the latest measurement off the scratchpad of the ds18x20 sensor
+// and store it in gTempdata
+void read_temp_meas(void){
+   uint8_t i;
+   uint8_t subzero, cel, cel_frac_bits;
+   for ( i=0; i<gNsensors; i++ )
+   {
+      
+      if ( DS18X20_read_meas( &gSensorIDs[i][0], &subzero,
+                             &cel, &cel_frac_bits) == DS18X20_OK )
+      {
+         gTempdata[i]=cel*10;
+         gTempdata[i]+=DS18X20_frac_bits_decimal(cel_frac_bits);
+         if (subzero)
+         {
+            gTempdata[i]=-gTempdata[i];
+         }
+      }
+      else
+      {
+         gTempdata[i]=0;
+      }
+   }
+}
+
+
+// Code 1_wire end
 
 
 
@@ -571,6 +645,45 @@ ISR (TIMER0_OVF_vect)
    
 }
 
+#pragma mark timer1
+void timer1(void)
+{
+   
+   //SERVODDR |= (1<<SERVOPIN0);
+   /*
+    TCCR1A = (1<<WGM10)|(1<<COM1A1)   // Set up the two Control registers of Timer1.
+    |(1<<COM1B1);             // Wave Form Generation is Fast PWM 8 Bit,
+    TCCR1B = (1<<WGM12)|(1<<CS12)     // OC1A and OC1B are cleared on compare match
+    |(1<<CS10);               // and set at BOTTOM. Clock Prescaler is 1024.
+    
+    OCR1A = 63;                       // Dutycycle of OC1A = 25%
+    //OCR1B = 127;                      // Dutycycle of OC1B = 50%
+    
+    return;
+    */
+   // https://www.mikrocontroller.net/topic/83609
+   OCR1A = 0x3E8;           // Pulsdauer 1ms
+   OCR1A = 1000;
+   OCR1A = Servoposition[2];
+   //OCR1B = 0x0FFF;
+   ICR1 = 0xC3FF;          // Pulsabstand 50 ms  0x9FFF: 40ms
+   
+   // TCCR1A |= (1<<COM1A0);
+   TCCR1A |= (1<<COM1A1); // clear on compare match
+   TCCR1A |= (1<<WGM11);
+   
+   TCCR1B |= (1<<WGM12);
+   TCCR1B |= (1<<WGM13);
+   
+   TCCR1B |= (1<<CS11);
+   // TCCR1B |= (1<<CS10);
+   
+   
+   
+   //  TIMSK |= (1<<OCIE1A) | (1<<TICIE1); // OC1A Int enablad
+}
+
+
 #pragma mark INT0
 ISR(INT0_vect) // Interrupt bei CS, falling edge
 {
@@ -780,6 +893,12 @@ int main (void)
 	lcd_puts(VERSION);
    lcd_clr_line(1);
 	
+   lcd_gotoxy(0,0);
+   lcd_puts("Data_Logger\0");
+   delay_ms(1000);
+   //lcd_cls();
+   lcd_clr_line(0);
+   
 	uint8_t TastaturCount=0;
 		
 	//initADC(1);
@@ -793,9 +912,9 @@ int main (void)
    PWM = 0;
    
    char* versionstring[4] = {};
-   strncpy(versionstring, VERSION+9, 3);
+   strncpy((char*)versionstring, (VERSION+9), 3);
    versionstring[3]='\0';
-   volatile uint16_t versionint = atoi(versionstring);
+   volatile uint16_t versionint = atoi((char*)versionstring);
    volatile uint8_t versionintl = versionint & 0x00FF;
    //versionint >>=8;
    volatile uint8_t versioninth = (versionint & 0xFF00)>>8;
@@ -804,27 +923,64 @@ int main (void)
    
  //  masterstatus |= (1<<SUB_READ_EEPROM_BIT); // sub soll EE lesen
    
+#pragma mark DS1820 init
+   
+   // DS1820 init-stuff begin
+  // OW_OUT |= (1<<OW_PIN);
+   uint8_t i=0;
+   uint8_t nSensors=0;
+   uint8_t err = ow_reset();
+   lcd_gotoxy(18,0);
+   lcd_puthex(err);
+   gNsensors = search_sensors();
+   
+   delay_ms(100);
+   lcd_gotoxy(0,0);
+   lcd_puts("Sn:\0");
+   lcd_puthex(gNsensors);
+   if (gNsensors>0)
+   {
+      lcd_clr_line(1);
+      start_temp_meas();
+   }
+   i=0;
+   while(i<MAXSENSORS)
+   {
+      gTempdata[i]=0;
+      i++;
+   }
+   delay_ms(100);
+   lcd_gotoxy(0,0);
+   lcd_puts("Sens:\0");
+   lcd_puthex(gNsensors);
+   if (gNsensors>0)
+   {
+      lcd_clr_line(1);
+      start_temp_meas();
+   }
+   i=0;
+   while(i<MAXSENSORS)
+   {
+      gTempdata[i]=0;
+      i++;
+   }
+
+   // DS1820 init-stuff end
 
 	
 
    // ---------------------------------------------------
    // Vorgaben fuer Homescreen
    // ---------------------------------------------------
-	lcd_gotoxy(0,0);
-	lcd_puts("Digital_Power\0");
-   delay_ms(1000);
-   lcd_cls();
    //substatus |= (1<<SETTINGS_READ);;
    // ---------------------------------------------------
    // Settings beim Start lesen
    // ---------------------------------------------------
-   eepromstatus |= (1<<READ_EEPROM_START);
    
 //   timer0();
    
    sei();
    
-   uint8_t i=0;
 // MARK:  while
    
    volatile   uint8_t old_H=0;
@@ -847,6 +1003,10 @@ int main (void)
       
 		if (loopcount0==0xDFFF)
 		{
+         OSZI_A_LO;
+         ow_delay_us(200);
+         OSZI_A_HI;
+         
 			loopcount0=0;
 			loopcount1+=1;
 			LOOPLEDPORT ^=(1<<LOOPLED);
@@ -861,7 +1021,7 @@ int main (void)
          sendbuffer[3] = 75;
         // sendbuffer[5] = spi_rxbuffer[0];
          
-         for (i=0;i<SPI_BUFSIZE;i++)
+         for (int i=0;i<SPI_BUFSIZE;i++)
          {
             //lcd_puthex(spi_rxbuffer[i]);
 //            sendbuffer[i+CODE_OFFSET] = spi_rxbuffer[i];
@@ -870,7 +1030,7 @@ int main (void)
          lcd_gotoxy(0,1);
          lcd_putc('S');
          //lcd_putc(' ');
-          for (i=0;i<4;i++)
+          for (int i=0;i<4;i++)
           {
              lcd_puthex(sendbuffer[i]);
           }
@@ -970,7 +1130,40 @@ int main (void)
          {
         } //
 
-         
+#pragma mark Sensors
+         // Temperatur messen mit DS18S20
+         /*
+         if (gNsensors) // Sensor eingeseteckt
+         {
+            start_temp_meas();
+            delay_ms(800);
+            read_temp_meas();
+            uint8_t line=0;
+            //Sensor 1
+            lcd_gotoxy(0,line);
+            lcd_puts("T:     \0");
+            if (gTempdata[0]/10>=100)
+            {
+               lcd_gotoxy(3,line);
+               lcd_putint((gTempdata[0]/10));
+            }
+            else
+            {
+               lcd_gotoxy(2,line);
+               lcd_putint2((gTempdata[0]/10));
+            }
+            
+            lcd_putc('.');
+            lcd_putint1(gTempdata[0]%10);
+         }
+          
+         txbuffer[INNEN]=2*((gTempdata[0]/10)& 0x00FF);// T kommt mit Faktor 10 vom DS. Auf TWI ist T verdoppelt
+         // Halbgrad addieren
+         if (gTempdata[0]%10 >=5) // Dezimalstelle ist >=05: Wert  aufrunden, 1 addieren
+         {
+            txbuffer[INNEN] +=1;
+         }
+       */
          
 			
 

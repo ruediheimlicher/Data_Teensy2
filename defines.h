@@ -5,11 +5,11 @@
 
 #define TEST 1
 //Oszi
-#define OSZIPORT           PORTF
-#define OSZIPORTDDR        DDRF
-#define OSZIPORTPIN        PINF
-#define OSZI_PULS_A        0
-#define OSZI_PULS_B        1
+#define OSZIPORT           PORTD
+#define OSZIPORTDDR        DDRD
+#define OSZIPORTPIN        PIND
+#define OSZI_PULS_A        4
+#define OSZI_PULS_B        5
 
 
 #define OSZI_A_LO OSZIPORT &= ~(1<<OSZI_PULS_A)
@@ -53,7 +53,7 @@
 #define SOFT_SPI_SS_1            PB0
 
 
-
+#define INNEN 0
 
 
 // EEPROM Speicherorte
