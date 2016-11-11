@@ -660,12 +660,15 @@ void timer1(void)
     return;
     */
    // https://www.mikrocontroller.net/topic/83609
+   
+   
    OCR1A = 0x3E8;           // Pulsdauer 1ms
-   OCR1A = 1000;
+   OCR1A = 0x200;
    //OCR1A = Servoposition[2];
    //OCR1B = 0x0FFF;
-   ICR1 = 0xC3FF;          // Pulsabstand 50 ms  0x9FFF: 40ms
-   
+   ICR1 = 0x6400;          // 0x6400: Pulsabstand 50 ms
+
+   /*
    // TCCR1A |= (1<<COM1A0);
    TCCR1A |= (1<<COM1A1); // clear on compare match
    TCCR1A |= (1<<WGM11);
@@ -674,6 +677,15 @@ void timer1(void)
    TCCR1B |= (1<<WGM13);
    
    TCCR1B |= (1<<CS11);
+  */
+   // http://www.ledstyles.de/index.php/Thread/18214-ATmega32U4-Schaltungen-PWM/
+   DDRB |= (1<<DDB6)|(1<<DDB5);
+
+   TCCR1A |= (1<<COM1A1)|(1<<COM1B1)|(1<<COM1C1)|(1<<WGM11)|(1<<WGM12);
+   
+   TCCR1B |= (1<<WGM13)|(1<<CS11);
+//   TCCR1A=0xAA;
+//   TCCR1B=0x19;
    // TCCR1B |= (1<<CS10);
    
    
@@ -980,7 +992,7 @@ int main (void)
    // Settings beim Start lesen
    // ---------------------------------------------------
    
-   //timer1();
+  // timer1(); PORTB5,6
    
    sei();
    
@@ -1256,8 +1268,8 @@ int main (void)
 
          //lcd_puthex(recvbuffer[10]);
          //lcd_puthex(recvbuffer[11]);
-         lcd_putint12(recvbuffer[10] | (recvbuffer[11]<<8));
-         
+         //lcd_putint12(recvbuffer[10] | (recvbuffer[11]<<8));
+         OCR1A = (recvbuffer[10] | (recvbuffer[11]<<8));
          lcd_putc('*');
          
 
