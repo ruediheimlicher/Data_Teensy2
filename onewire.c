@@ -50,7 +50,8 @@ void ow_delay_us(uint8_t us)
 {
         while(us--)
         {
-                _delay_loop_1(2); // 4 would be 1us without overhead
+                _delay_loop_1(1); // 4 would be 1us without overhead
+           //_delay_us(1);
         }
 }
 
@@ -69,22 +70,26 @@ uint8_t ow_reset(void)
         uint8_t err;
         OW_DIR_OUT_LOW(); // pull OW-Pin low for 480us
    
-        ow_delay_us(233);  // min 480us in total
-        ow_delay_us(233);
+        ow_delay_us(230);  // min 480us in total
+        ow_delay_us(230);
+
+   ow_delay_us(90);  // min 480us in total
    
         // set Pin as input - wait for clients to pull low
         OW_DIR_IN(); // input and pull up
    //return(0);
-        ow_delay_us(53);   // 60 us
+    //    ow_delay_us(53);   // 60 us
+   ow_delay_us(33);   // 60 us
         err = ow_input_pin_state(); // devices should now pull low
         // nobody pulled to low, still high-> error
         // after a delay the clients should release the line
         // and input-pin gets back to high due to pull-up-resistor
   
-   ow_delay_us(233);  // max 240us in total
-        if (err==1)
+   //ow_delay_us(233);  // max 240us in total
+      ow_delay_us(255);
+   if (err==1)
         {
-                return(3); // no presence puls
+                return(2); // no presence puls
         }
    
     

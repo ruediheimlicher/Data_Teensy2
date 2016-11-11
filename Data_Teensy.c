@@ -382,13 +382,11 @@ void Master_Init(void)
    SPI_PORT |= (1<<SPI_MOSI);	// HI
 
 	//Pin 0 von   als Ausgang fuer OSZI
-	OSZIPORTDDR |= (1<<OSZI_PULS_A);	//Pin 0 von  als Ausgang fuer OSZI
-   OSZIPORT |= (1<<OSZI_PULS_A);		// HI
+	OSZIPORTDDR |= (1<<PULSA);	//Pin 0 von  als Ausgang fuer OSZI
+   OSZIPORT |= (1<<PULSA);		// HI
 	
-   OSZIPORTDDR |= (1<<OSZI_PULS_B);		//Pin 1 von  als Ausgang fuer OSZI
-   OSZIPORT |= (1<<OSZI_PULS_B);		//Pin   von   als Ausgang fuer OSZI
-   
-   
+   OSZIPORTDDR |= (1<<PULSB);		//Pin 1 von  als Ausgang fuer OSZI
+   OSZIPORT |= (1<<PULSB);		//Pin   von   als Ausgang fuer OSZI
 	
    /*
     TASTENDDR &= ~(1<<TASTE0);	//Bit 0 von PORT B als Eingang fŸr Taste 0
@@ -664,7 +662,7 @@ void timer1(void)
    // https://www.mikrocontroller.net/topic/83609
    OCR1A = 0x3E8;           // Pulsdauer 1ms
    OCR1A = 1000;
-   OCR1A = Servoposition[2];
+   //OCR1A = Servoposition[2];
    //OCR1B = 0x0FFF;
    ICR1 = 0xC3FF;          // Pulsabstand 50 ms  0x9FFF: 40ms
    
@@ -687,10 +685,10 @@ void timer1(void)
 #pragma mark INT0
 ISR(INT0_vect) // Interrupt bei CS, falling edge
 {
-   OSZI_A_LO;
+//   OSZI_A_LO;
    inindex=0;
    SPDR = 0;// Erstes Byte an Slave
-   OSZI_A_HI;
+//   OSZI_A_HI;
    
  //  spi_txbuffer[0]++;
  //  spi_txbuffer[2]--;
@@ -833,11 +831,16 @@ uint8_t Tastenwahl(uint8_t Tastaturwert)
 
 
 
+/*
+//#define OSZIA_LO() OSZIPORT &= ~(1<<4)
+#define OSZI_A_HI() OSZIPORT |= (1<<4)
+#define OSZI_A_TOGG() OSZIPORT ^= (1<<4)
+*/
 
+//#define OSZIA_LO( bit) PORTD &= ~(1 << (PULSA))
 
-
-
-
+#define setbit(port, bit) (port) |= (1 << (bit))
+#define clearbit(port, bit) (port) &= ~(1 << (bit))
 
 
 
@@ -977,18 +980,32 @@ int main (void)
    // Settings beim Start lesen
    // ---------------------------------------------------
    
-//   timer0();
+   //timer1();
    
    sei();
    
-// MARK:  while
+
    
    volatile   uint8_t old_H=0;
    volatile   uint8_t old_L=0;
    uint8_t teensy_err =0;
    uint8_t testfix=0;
-
-	while (1)
+   
+   
+   OSZIPORTDDR |= (1<<PULSA);	//Pin 0 von  als Ausgang fuer OSZI
+   OSZIPORT |= (1<<PULSA);		// HI
+   
+ //  OSZIPORTDDR |= (1<<OSZI_PULS_B);		//Pin 1 von  als Ausgang fuer OSZI
+ //  OSZIPORT |= (1<<OSZI_PULS_B);		//Pin   von   als Ausgang fuer OSZI
+   
+   //DDRD |= (1<<4);
+   //PORTD |= (1<<4);
+   //OSZIA_HI;
+   //OSZIPORT |= (1<<OSZI_PULS_A);
+   
+   
+// MARK:  while
+   while (1)
 	{
       //OSZI_B_LO;
 		//Blinkanzeige
@@ -999,14 +1016,25 @@ int main (void)
 // MARK:  spi_rxdata
       
       /* **** end spi_buffer abfragen **************** */
-
+      
+      //OSZI_A_TOGG;
       
 		if (loopcount0==0xDFFF)
 		{
-         OSZI_A_LO;
-         ow_delay_us(200);
-         OSZI_A_HI;
-         
+         /*
+          uint8_t err = ow_reset();
+         lcd_gotoxy(12,0);
+         lcd_puthex(err);
+         //PORTD &= ~(1<<4);
+         OSZIA_LO;
+         //clearbit(PORTD, PD4);
+         ow_delay_us(250);
+         ow_delay_us(250);
+         ow_delay_us(50);
+         OSZIA_HI;
+         //setbit(PORTD, PD4);
+         //PORTD |=  (1<<4);
+          */
 			loopcount0=0;
 			loopcount1+=1;
 			LOOPLEDPORT ^=(1<<LOOPLED);
@@ -1128,28 +1156,28 @@ int main (void)
          
          if(loopcount1%16 == 0)
          {
-        } //
+        
 
 #pragma mark Sensors
          // Temperatur messen mit DS18S20
-         /*
-         if (gNsensors) // Sensor eingeseteckt
+         
+         if (gNsensors) // Sensor eingesteckt
          {
             start_temp_meas();
             delay_ms(800);
             read_temp_meas();
-            uint8_t line=0;
+            uint8_t line=1;
             //Sensor 1
-            lcd_gotoxy(0,line);
+            lcd_gotoxy(10,line);
             lcd_puts("T:     \0");
             if (gTempdata[0]/10>=100)
             {
-               lcd_gotoxy(3,line);
+               lcd_gotoxy(13,line);
                lcd_putint((gTempdata[0]/10));
             }
             else
             {
-               lcd_gotoxy(2,line);
+               lcd_gotoxy(12,line);
                lcd_putint2((gTempdata[0]/10));
             }
             
@@ -1157,13 +1185,17 @@ int main (void)
             lcd_putint1(gTempdata[0]%10);
          }
           
-         txbuffer[INNEN]=2*((gTempdata[0]/10)& 0x00FF);// T kommt mit Faktor 10 vom DS. Auf TWI ist T verdoppelt
-         // Halbgrad addieren
+            sendbuffer[DSLO]=((gTempdata[0])& 0x00FF);// T kommt mit Faktor 10 vom DS. Auf TWI ist T verdoppelt
+            sendbuffer[DSHI]=((gTempdata[0]& 0xFF00)>>8);// T kommt mit Faktor 10 vom DS. Auf TWI ist T verdoppelt
+            //lcd_gotoxy(10,0);
+            //lcd_putint(sendbuffer[DSLO]);
+            //lcd_putint(sendbuffer[DSHI]);
+            // Halbgrad addieren
          if (gTempdata[0]%10 >=5) // Dezimalstelle ist >=05: Wert  aufrunden, 1 addieren
          {
-            txbuffer[INNEN] +=1;
+           // txbuffer[INNEN] +=1;
          }
-       */
+       } //
          
 			
 
@@ -1217,12 +1249,14 @@ int main (void)
          //lcd_putint2(usb_readcount);
          lcd_putc('R');
          
-         lcd_puthex(recvbuffer[0]);
-         lcd_puthex(recvbuffer[1]);
-         lcd_puthex(recvbuffer[2]);
-         lcd_puthex(recvbuffer[3]);
+         lcd_puthex(recvbuffer[8]);
+         lcd_puthex(recvbuffer[9]);
          
-         
+         lcd_gotoxy(10,0);
+
+         //lcd_puthex(recvbuffer[10]);
+         //lcd_puthex(recvbuffer[11]);
+         lcd_putint12(recvbuffer[10] | (recvbuffer[11]<<8));
          
          lcd_putc('*');
          

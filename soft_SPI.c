@@ -10,7 +10,7 @@
 #include <avr/io.h>
 
 // defines fuer Atmega328p
-
+/*
 #define OSZIPORT		PORTC
 #define OSZIPORTDDR	DDRC
 #define OSZIPORTPIN	PINC
@@ -19,7 +19,7 @@
 #define OSZILO OSZIPORT &= ~(1<<PULS)
 #define OSZIHI OSZIPORT |= (1<<PULS)
 #define OSZITOGG OSZIPORT ^= (1<<PULS)
-
+*/
 #define SPI_DDR			DDRD						// DDR fuer SPI
 #define SPI_PORT		PORTD						// Port fuer SPI
 #define SPI_PORTPIN	PIND						// Port-Pin fuer SPI
@@ -130,8 +130,7 @@ void Init_SPI_Master(void)
 	SPI_DDR &= ~(1<<SPI_MISO);																// MISO Eingang
 	SPI_PORT |=(1<<SPI_MISO);																	// HI
 
-	OSZIPORTDDR |=(1<<PULS);
-	OSZIPORT |= (1<<PULS);
+
 
 } 
 

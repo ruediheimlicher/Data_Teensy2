@@ -8,13 +8,15 @@
 #define OSZIPORT           PORTD
 #define OSZIPORTDDR        DDRD
 #define OSZIPORTPIN        PIND
-#define OSZI_PULS_A        4
+#define OSZI_PULS_A        0
+#define PULSA        4
+#define PULSB        5
 #define OSZI_PULS_B        5
 
 
-#define OSZI_A_LO OSZIPORT &= ~(1<<OSZI_PULS_A)
-#define OSZI_A_HI OSZIPORT |= (1<<OSZI_PULS_A)
-#define OSZI_A_TOGG OSZIPORT ^= (1<<OSZI_PULS_A)
+#define OSZIA_LO OSZIPORT &= ~(1<<PULSA)
+#define OSZIA_HI OSZIPORT |= (1<<PULSA)
+#define OSZIA_TOGG OSZIPORT ^= (1<<PULSA)
 
 
 #define OSZI_B_LO OSZIPORT &= ~(1<<OSZI_PULS_B)
@@ -53,9 +55,10 @@
 #define SOFT_SPI_SS_1            PB0
 
 
-#define INNEN 0
-
-
+#define DSLO 8
+#define DSHI 9
+#define SERVOALO  10
+#define SERVOAHI  11
 // EEPROM Speicherorte
 
 #define TASK_OFFSET        0x2000 // Ort fuer Einstellungen
