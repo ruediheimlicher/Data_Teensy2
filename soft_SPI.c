@@ -11,6 +11,7 @@
 
 // defines fuer Atmega328p
 /*
+ 
 #define OSZIPORT		PORTC
 #define OSZIPORTDDR	DDRC
 #define OSZIPORTPIN	PINC
@@ -20,18 +21,13 @@
 #define OSZIHI OSZIPORT |= (1<<PULS)
 #define OSZITOGG OSZIPORT ^= (1<<PULS)
 */
-#define SPI_DDR			DDRD						// DDR fuer SPI
-#define SPI_PORT		PORTD						// Port fuer SPI
-#define SPI_PORTPIN	PIND						// Port-Pin fuer SPI
+
+#define SOFT_SPI_PORTPIN	PIND						// Port-Pin fuer SPI
 
 // ************************************************
 // Modifizierte Belegung fuer Betrieb mit Webserver
 // ************************************************
 
-#define SPI_MOSI		PORTD0					// Eingang fuer Daten zum Slave
-#define SPI_MISO		PORTD1					// Ausgang fuer Daten vom Slave
-#define SPI_SCK			PORTD2					// Ausgang fuer CLK
-#define SPI_CS_HC		PORTD3					// Ausgang CS fuer Slave
 
 // ************************************************
 // defines fuer cronstatus
@@ -122,13 +118,13 @@ volatile uint8_t  sendstatus = 0; // Daten an Webhost senden
 
 uint8_t SPI_shift_out_byte(uint8_t out_byte);
 
-void Init_SPI_Master(void) 
+void Init_Soft_SPI_Master(void)
 { 
-	SPI_DDR |= ((1<<SPI_MOSI)|(1<<SPI_SCK)|(1<<SPI_CS_HC));	// Set MOSI , SCK , and SS output 
-	SPI_PORT |=(1<<SPI_SCK);
+	SOFT_SPI_DDR |= ((1<<SOFT_SPI_MOSI)|(1<<SOFT_SPI_SCLK)|(1<<SOFT_SPI_CS_HC));	// Set MOSI , SCK , and SS output
+	SOFT_SPI_PORT |=(1<<SOFT_SPI_SCLK);
 
-	SPI_DDR &= ~(1<<SPI_MISO);																// MISO Eingang
-	SPI_PORT |=(1<<SPI_MISO);																	// HI
+	SOFT_SPI_DDR &= ~(1<<SPI_MISO_PIN);																// MISO Eingang
+	SOFT_SPI_PORT |=(1<<SPI_MISO_PIN);																	// HI
 
 
 
@@ -136,7 +132,7 @@ void Init_SPI_Master(void)
 
 void Clear_SPI_Master(void)
 {
-	SPI_PORT |= ((0<<SPI_MOSI)|(0<<SPI_SCK)|(0<<SPI_CS_HC));	// Set MOSI , SCK , and SS LO 
+	SOFT_SPI_PORT |= ((0<<SOFT_SPI_MOSI)|(0<<SOFT_SPI_SCLK)|(0<<SOFT_SPI_CS_HC));	// Set MOSI , SCK , and SS LO
 
    
 }
@@ -152,22 +148,22 @@ uint8_t SPI_shift_out_byte(uint8_t out_byte)
 		if (out_byte & 0x80)
 		{
 			/* this bit is high */
-			SPI_PORT |=_BV(SPI_MOSI); // MOSI HI
+			SPI_PORT |=_BV(SPI_MOSI_PIN); // MOSI HI
 		}
 		else
 		{
 			/* this bit is low */
-			SPI_PORT &= ~_BV(SPI_MOSI); // MOSI LO						
+			SPI_PORT &= ~_BV(SPI_MOSI_PIN); // MOSI LO
 		}
 		_delay_us(2*out_PULSE_DELAY);
 		//_delay_us(20);
 		// Vorgang beginnt: Takt LO, Slave legt Data auf MISO
 		
-		SPI_PORT &=~(1<<SPI_SCK);				
+		SOFT_SPI_PORT &=~(1<<SPI_SCK_PIN);
 		_delay_us(2*out_PULSE_DELAY);		
 		
 		// Slave lesen von MISO
-		if (SPI_PORTPIN & (1<<SPI_MISO))	// Bit vom Slave ist HI
+		if (SOFT_SPI_PORTPIN & (1<<SPI_MISO_PIN))	// Bit vom Slave ist HI
 		{
 			in_byte |= (1<<(7-i));
 		}
@@ -177,7 +173,7 @@ uint8_t SPI_shift_out_byte(uint8_t out_byte)
 		}
 		//_delay_us(out_PULSE_DELAY);
 		_delay_us(20);
-		SPI_PORT |=(1<<SPI_SCK);				// Takt HI
+		SPI_PORT |=(1<<SPI_SCK_PIN);				// Takt HI
 		
 		out_byte = out_byte << 1;									//	Byte um eine Stelle nach links schieben
 		//_delay_us(out_PULSE_DELAY);

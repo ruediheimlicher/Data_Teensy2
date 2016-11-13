@@ -18,12 +18,14 @@
 #define SingleEnd    0x01        // set to Single-End A/D input
 #define Differential 0x00        // set to Differential A/D input
 
+
 #define SPI_DDR                  DDRB    //DDRB
 #define SPI_PORT                 PORTB   //PORTB
 #define SPI_SS_PIN                 0
 #define SPI_SCK_PIN                1
 #define SPI_MOSI_PIN               2
 #define SPI_MISO_PIN               3
+
 
 // SPI clock modes aus spi.h
 #define SPI_MODE_0 0x00 /* Sample (Rising) Setup (Falling) CPOL=0, CPHA=0 */

@@ -33,12 +33,19 @@
 #if(MCU ==atmega32u4)//        # Teensy 2.0
 #define SPI_PORT           PORTB
 #define SPI_DDR            DDRB
-#define SPI_MISO           PB3
-#define SPI_MOSI           PB2
-#define SPI_SCLK           PB1
-#define SPI_SS             PB0
+#define SPI_MISO_PIN           PB3
+#define SPI_MOSI_PIN           PB2
+#define SPI_SCK_PIN           PB1
+#define SPI_SS_PIN             PB0
 #endif
 
+/*
+ #define SPI_MISO 			3  //Port Pin an dem Data Output der MMC/SD-Karte angeschlossen ist
+ #define SPI_MOSI    		2  //Port Pin an dem Data Input der MMC/SD-Karte angeschlossen ist
+ #define SPI_Clock 			1  //Port Pin an dem die Clock der MMC/SD-Karte angeschlossen ist (clk)
+ #define SPI_SS    			0  //Port Pin an dem Chip Select der MMC/SD-Karte angeschlossen ist (CS)
+ 
+ */
 
 // bits von spistatus
 
@@ -53,6 +60,7 @@
 #define SOFT_SPI_SCLK           PB1
 #define SOFT_SPI_SS_0            PB0
 #define SOFT_SPI_SS_1            PB0
+#define SOFT_SPI_CS_HC           PB0
 
 
 #define DSLO 8

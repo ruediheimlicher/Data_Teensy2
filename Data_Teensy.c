@@ -21,7 +21,7 @@
 
 
 #include "lcd.c"
-#include "adc.c"
+//#include "adc.c"
 #include "version.c"
 #include "usb_rawhid.c"
 #include "defines.h"
@@ -33,6 +33,12 @@
 #include "soft_SPI.c"
 
 #include "ds18x20.c"
+
+// MMC
+#include "diskio.c"
+#include "ff.c"
+
+#include "mmc.c"
 
 // USB
 #define CPU_PRESCALE(n)	(CLKPR = 0x80, CLKPR = (n))
@@ -378,8 +384,6 @@ void Master_Init(void)
 	LOOPLEDDDR |=(1<<LOOPLED);
 	LOOPLEDPORT |= (1<<LOOPLED);	// HI
 
-   SPI_DDR |=(1<<SPI_MOSI);
-   SPI_PORT |= (1<<SPI_MOSI);	// HI
 
 	//Pin 0 von   als Ausgang fuer OSZI
 	OSZIPORTDDR |= (1<<PULSA);	//Pin 0 von  als Ausgang fuer OSZI
@@ -428,18 +432,21 @@ void SPI_PORT_Init(void) // SPI-Pins aktivieren
    
    //http://www.atmel.com/dyn/resources/prod_documents/doc2467.pdf  page:165
    
-   /*
+   
    //Master init
    // Set MOSI and SCK output, all others input
    SPI_DDR &= ~(1<<SPI_MISO_PIN);
-   SPI_PORT &= ~(1<<SPI_MISO_PIN); // HI   
+   SPI_PORT |= (1<<SPI_MISO_PIN); // HI
    SPI_DDR |= (1<<SPI_MOSI_PIN);
    SPI_DDR |= (1<<SPI_SCK_PIN);
-   SPI_PORT &= ~(1<<SPI_SCK_PIN); // LO
+//   SPI_PORT |= (1<<SPI_SCK_PIN); // HI
    SPI_DDR |= (1<<SPI_SS_PIN);
    SPI_PORT |= (1<<SPI_SS_PIN); // HI
-    */
+    
    
+ 
+   
+   /*
    // Slave init
    SPI_DDR |= (1<<SPI_MISO_PIN); // Output
    //SPI_PORT &= ~(1<<SPI_MISO_PIN); // HI
@@ -448,7 +455,7 @@ void SPI_PORT_Init(void) // SPI-Pins aktivieren
    //SPI_PORT &= ~(1<<SPI_SCK_PIN); // LO
    SPI_DDR &= ~(1<<SPI_SS_PIN); // Input
    SPI_PORT |= (1<<SPI_SS_PIN); // HI
-
+    */
    
    
    
@@ -950,9 +957,9 @@ int main (void)
    gNsensors = search_sensors();
    
    delay_ms(100);
-   lcd_gotoxy(0,0);
-   lcd_puts("Sn:\0");
-   lcd_puthex(gNsensors);
+   //lcd_gotoxy(0,0);
+   //lcd_puts("Sn:\0");
+   //lcd_puthex(gNsensors);
    if (gNsensors>0)
    {
       lcd_clr_line(1);
@@ -965,11 +972,12 @@ int main (void)
       i++;
    }
    delay_ms(100);
-   lcd_gotoxy(0,0);
-   lcd_puts("Sens:\0");
-   lcd_puthex(gNsensors);
    if (gNsensors>0)
    {
+      lcd_gotoxy(0,0);
+      lcd_puts("Sns:\0");
+      lcd_puthex(gNsensors);
+
       lcd_clr_line(1);
       start_temp_meas();
    }
@@ -982,7 +990,7 @@ int main (void)
 
    // DS1820 init-stuff end
 
-	
+   SPI_PORT_Init();
 
    // ---------------------------------------------------
    // Vorgaben fuer Homescreen
@@ -992,7 +1000,7 @@ int main (void)
    // Settings beim Start lesen
    // ---------------------------------------------------
    
-  // timer1(); PORTB5,6
+  // timer1(); PORTB5,6, Servo
    
    sei();
    
@@ -1002,21 +1010,48 @@ int main (void)
    volatile   uint8_t old_L=0;
    uint8_t teensy_err =0;
    uint8_t testfix=0;
-   
-   
+
+
+   // MMC
    OSZIPORTDDR |= (1<<PULSA);	//Pin 0 von  als Ausgang fuer OSZI
    OSZIPORT |= (1<<PULSA);		// HI
    
- //  OSZIPORTDDR |= (1<<OSZI_PULS_B);		//Pin 1 von  als Ausgang fuer OSZI
- //  OSZIPORT |= (1<<OSZI_PULS_B);		//Pin   von   als Ausgang fuer OSZI
+#pragma mark MMC
+#define DRV_MMC 0
+   long p1, p2, p3;
    
-   //DDRD |= (1<<4);
-   //PORTD |= (1<<4);
-   //OSZIA_HI;
-   //OSZIPORT |= (1<<OSZI_PULS_A);
+   BYTE Buff[4096];	/* Working buffer */
+   
+   FATFS FatFs[2];		/* File system object for each logical drive */
+   FIL File[2];		/* File object */
+   DIR Dir;			/* Directory object */
+   FILINFO Finfo;
+   DWORD AccSize;				/* Work register for fs command */
+   WORD AccFiles, AccDirs;
+   
+   BYTE RtcOk;				/* RTC is available */
+   volatile UINT Timer;	/* Performance timer (100Hz increment) */
+   
+   //uint8_t mmcerr = disk_initialize(DRV_MMC);
+//   lcd_gotoxy(0,0);
+//   lcd_puthex(mmcerr);
+   
+  // SourceCodeV3
+   lcd_gotoxy(0,1);
+   uint8_t mmcerr = mmc_init();
+   lcd_gotoxy(10,0);
+   lcd_puthex(mmcerr);
    
    
-// MARK:  while
+//   while ( mmc_init() !=0) //ist der Rückgabewert ungleich NULL ist ein Fehler aufgetreten
+   {
+//      lcd_puts("NO");
+   }
+   //lcd_puts("YES");
+   
+   
+    // SourceCodeV3  end
+   // MARK:  while
    while (1)
 	{
       //OSZI_B_LO;
@@ -1050,6 +1085,10 @@ int main (void)
 			loopcount0=0;
 			loopcount1+=1;
 			LOOPLEDPORT ^=(1<<LOOPLED);
+         
+         //SPI_PORT ^= (1<<SPI_SCK_PIN);
+         
+         //mmc_write_byte(loopcount1 & 0xFF);
          
          //OSZI_A_LO;
          //lcd_gotoxy(18,0);
