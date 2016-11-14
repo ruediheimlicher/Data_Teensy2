@@ -27,12 +27,13 @@
 #include "defines.h"
 
 //#include "spi.c"
-#include "spi_adc.c"
+//#include "spi_adc.c"
 
 //#include "spi_slave.c"
-#include "soft_SPI.c"
+//#include "soft_SPI.c"
 
 #include "ds18x20.c"
+#include "chan_ff/chan.c"
 
 // USB
 #define CPU_PRESCALE(n)	(CLKPR = 0x80, CLKPR = (n))
@@ -378,8 +379,8 @@ void Master_Init(void)
 	LOOPLEDDDR |=(1<<LOOPLED);
 	LOOPLEDPORT |= (1<<LOOPLED);	// HI
 
-   SPI_DDR |=(1<<SPI_MOSI);
-   SPI_PORT |= (1<<SPI_MOSI);	// HI
+   SPI_DDR |=(1<<SPI_MO);
+   SPI_PORT |= (1<<SPI_MO);	// HI
 
 	//Pin 0 von   als Ausgang fuer OSZI
 	OSZIPORTDDR |= (1<<PULSA);	//Pin 0 von  als Ausgang fuer OSZI
@@ -415,7 +416,7 @@ void Master_Init(void)
    // ---------------------------------------------------
 	//LCD
    // ---------------------------------------------------
-	LCD_DDR |= (1<<LCD_RSDS_PIN);		// PIN als Ausgang fuer LCD
+	LCD_DDR |= (1<<LCD_RSDS);		// PIN als Ausgang fuer LCD
  	LCD_DDR |= (1<<LCD_ENABLE_PIN);	//Pin als Ausgang fuer LCD
 	LCD_DDR |= (1<<LCD_CLOCK_PIN);	//Pin 6 von PORT D als Ausgang fuer LCD
    
@@ -428,27 +429,27 @@ void SPI_PORT_Init(void) // SPI-Pins aktivieren
    
    //http://www.atmel.com/dyn/resources/prod_documents/doc2467.pdf  page:165
    
-   /*
+  
    //Master init
    // Set MOSI and SCK output, all others input
-   SPI_DDR &= ~(1<<SPI_MISO_PIN);
-   SPI_PORT &= ~(1<<SPI_MISO_PIN); // HI   
-   SPI_DDR |= (1<<SPI_MOSI_PIN);
-   SPI_DDR |= (1<<SPI_SCK_PIN);
-   SPI_PORT &= ~(1<<SPI_SCK_PIN); // LO
-   SPI_DDR |= (1<<SPI_SS_PIN);
-   SPI_PORT |= (1<<SPI_SS_PIN); // HI
-    */
+   SPI_DDR &= ~(1<<SPI_MI);
+   SPI_PORT &= ~(1<<SPI_MI); // HI
+   SPI_DDR |= (1<<SPI_MO);
+   SPI_DDR |= (1<<SPI_SCK);
+   SPI_PORT &= ~(1<<SPI_SCK); // LO
+   SPI_DDR |= (1<<SPI_SS);
+   SPI_PORT |= (1<<SPI_SS); // HI
    
+   /*
    // Slave init
-   SPI_DDR |= (1<<SPI_MISO_PIN); // Output
-   //SPI_PORT &= ~(1<<SPI_MISO_PIN); // HI
-   SPI_DDR &= ~(1<<SPI_MOSI_PIN); // Input
+   SPI_DDR |= (1<<SPI_MI); // Output
+   //SPI_PORT &= ~(1<<SPI_MI); // HI
+   SPI_DDR &= ~(1<<SPI_MO); // Input
    SPI_DDR &= ~(1<<SPI_SCK_PIN); // Input
    //SPI_PORT &= ~(1<<SPI_SCK_PIN); // LO
-   SPI_DDR &= ~(1<<SPI_SS_PIN); // Input
-   SPI_PORT |= (1<<SPI_SS_PIN); // HI
-
+   SPI_DDR &= ~(1<<SPI_SS); // Input
+   SPI_PORT |= (1<<SPI_SS); // HI
+*/
    
    
    
@@ -457,8 +458,8 @@ void SPI_PORT_Init(void) // SPI-Pins aktivieren
 void SPI_ADC_init(void) // SS-Pin fuer EE aktivieren
 {
    
-   SPI_DDR |= (1<<SPI_SS_PIN);
-   SPI_PORT |= (1<<SPI_SS_PIN); // HI
+   SPI_DDR |= (1<<SPI_SS);
+   SPI_PORT |= (1<<SPI_SS); // HI
 }
 
 
@@ -468,29 +469,29 @@ void spi_start(void) // SPI-Pins aktivieren
    //http://www.atmel.com/dyn/resources/prod_documents/doc2467.pdf  page:165
    //Master init
    // Set MOSI and SCK output, all others input
-   SPI_DDR &= ~(1<<SPI_MISO_PIN);
-   SPI_PORT &= ~(1<<SPI_MISO_PIN); // LO
+   SPI_DDR &= ~(1<<SPI_MI);
+   SPI_PORT &= ~(1<<SPI_MI); // LO
    
-   SPI_DDR |= (1<<SPI_MOSI_PIN);
-   SPI_PORT &= ~(1<<SPI_MOSI_PIN); // LO
+   SPI_DDR |= (1<<SPI_MO);
+   SPI_PORT &= ~(1<<SPI_MO); // LO
    
-   SPI_DDR |= (1<<SPI_SCK_PIN);
-   SPI_PORT &= ~(1<<SPI_SCK_PIN); // LO
+   SPI_DDR |= (1<<SPI_SCK);
+   SPI_PORT &= ~(1<<SPI_SCK); // LO
    
-   SPI_DDR |= (1<<SPI_SS_PIN);
-   SPI_PORT |= (1<<SPI_SS_PIN); // HI
+   SPI_DDR |= (1<<SPI_SS);
+   SPI_PORT |= (1<<SPI_SS); // HI
   }
 
 void spi_end(void) // SPI-Pins deaktivieren
 {
    SPCR=0;
    
-   SPI_DDR &= ~(1<<SPI_MOSI_PIN); // MOSI off
-   SPI_DDR &= ~(1<<SPI_SCK_PIN); // SCK off
-   SPI_DDR &= ~(1<<SPI_SS_PIN); // SS off
+   SPI_DDR &= ~(1<<SPI_MO); // MOSI off
+   SPI_DDR &= ~(1<<SPI_SCK); // SCK off
+   SPI_DDR &= ~(1<<SPI_SS); // SS off
    
-   //SPI_RAM_DDR &= ~(1<<SPI_RAM_CS_PIN); // RAM-CS-PIN off
-   //SPI_EE_DDR &= ~(1<<SPI_EE_CS_PIN); // EE-CS-PIN off
+   //SPI_RAM_DDR &= ~(1<<SPI_RAM_CS); // RAM-CS-PIN off
+   //SPI_EE_DDR &= ~(1<<SPI_EE_CS); // EE-CS-PIN off
 }
 
 /*
@@ -857,7 +858,7 @@ uint8_t Tastenwahl(uint8_t Tastaturwert)
 
 
 // MARK:  - main
-int main (void)
+int mainfkt (void)
 {
    
    uint16_t tempwert = 444;

@@ -33,9 +33,9 @@
 #if(MCU ==atmega32u4)//        # Teensy 2.0
 #define SPI_PORT           PORTB
 #define SPI_DDR            DDRB
-#define SPI_MISO           PB3
-#define SPI_MOSI           PB2
-#define SPI_SCLK           PB1
+#define SPI_MI           PB3
+#define SPI_MO           PB2
+#define SPI_SCK           PB1
 #define SPI_SS             PB0
 #endif
 

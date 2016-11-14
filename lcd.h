@@ -22,7 +22,7 @@
 #define LCD_PORT                 PORTB
 #define LCD_DDR                  DDRB
 
-#define LCD_RSDS_PIN            4
+#define LCD_RSDS            4
 #define LCD_ENABLE_PIN          5
 #define LCD_CLOCK_PIN           6
 
@@ -30,7 +30,7 @@
 #define LCD_PORT                PORTF
 #define LCD_DDR                 DDRF
 
-#define LCD_RSDS_PIN            5
+#define LCD_RSDS            5
 #define LCD_ENABLE_PIN          6
 #define LCD_CLOCK_PIN           7
 

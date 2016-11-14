@@ -141,12 +141,12 @@ lcd_load_byte(uint8_t out_byte)
                 if (out_byte & 0x80)	// Maske 1000 0000
                 {
                         /* this bit is high */
-                        LCD_PORT |=_BV(LCD_RSDS_PIN); 
+                        LCD_PORT |=_BV(LCD_RSDS); 
                 }
                 else
                 {
                         /* this bit is low */
-                        LCD_PORT &= ~_BV(LCD_RSDS_PIN);
+                        LCD_PORT &= ~_BV(LCD_RSDS);
                 }
                 out_byte = out_byte << 1;
                 
@@ -166,7 +166,7 @@ void
 lcd_send_cmd(void)
 {
         /* Data in '164 is a command, so RS must be low (0) */
-        LCD_PORT &= ~_BV(LCD_RSDS_PIN); 
+        LCD_PORT &= ~_BV(LCD_RSDS); 
         lcd_strobe_E();	
         _delay_us(50);
 }
@@ -179,7 +179,7 @@ void
 lcd_send_char(void)
 {
         /* Data in '164 is a character, so RS must be high (1) */
-        LCD_PORT |= _BV(LCD_RSDS_PIN); 
+        LCD_PORT |= _BV(LCD_RSDS); 
         lcd_strobe_E();
         _delay_us(50);
 }
