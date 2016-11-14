@@ -21,16 +21,16 @@
 
 
 #include "lcd.c"
-#include "adc.c"
+//#include "adc.c"
 #include "version.c"
 #include "usb_rawhid.c"
 #include "defines.h"
 
 //#include "spi.c"
-#include "spi_adc.c"
+//#include "spi_adc.c"
 
 //#include "spi_slave.c"
-#include "soft_SPI.c"
+//#include "soft_SPI.c"
 
 #include "ds18x20.c"
 
@@ -47,6 +47,14 @@
 
 #define CODE_OFFSET  4
 #define ROTARY_OFFSET  10
+
+
+#include "SD_MMC/mmc.c"
+#include "SD_MMC/fat.c"
+#include "SD_MMC/mmc_config.h"
+#include "SD_MMC/file.c"
+
+#define TOP_OCR 0x9B
 
 /*
 const char wertearray[] PROGMEM = {TASTE1,TASTE2,TASTE3,TASTE4,TASTE5,TASTE6,TASTE7,TASTE8,TASTE9,TASTE_L,TASTE0,TASTE_R};
@@ -253,7 +261,17 @@ uint16_t get_key_press( uint16_t key_mask )
 }
 
 */
+/*
+#define SPI_PORT           PORTB
+#define SPI_PORT           PORTB
+#define SPI_DDR            DDRB
+#define SPI_MO           PORTB2
+#define SPI_CLK            PB1
+#define SPI_SS             PB0
+*/
 
+#define SPI_PORT           PORTB
+#define SPI_DDR            DDRB
 
 #pragma mark 1-wire
 
@@ -378,10 +396,7 @@ void Master_Init(void)
 	LOOPLEDDDR |=(1<<LOOPLED);
 	LOOPLEDPORT |= (1<<LOOPLED);	// HI
 
-   SPI_DDR |=(1<<SPI_MOSI);
-   SPI_PORT |= (1<<SPI_MOSI);	// HI
-
-	//Pin 0 von   als Ausgang fuer OSZI
+  	//Pin 0 von   als Ausgang fuer OSZI
 	OSZIPORTDDR |= (1<<PULSA);	//Pin 0 von  als Ausgang fuer OSZI
    OSZIPORT |= (1<<PULSA);		// HI
 	
@@ -428,27 +443,28 @@ void SPI_PORT_Init(void) // SPI-Pins aktivieren
    
    //http://www.atmel.com/dyn/resources/prod_documents/doc2467.pdf  page:165
    
-   /*
+   
    //Master init
    // Set MOSI and SCK output, all others input
-   SPI_DDR &= ~(1<<SPI_MISO_PIN);
-   SPI_PORT &= ~(1<<SPI_MISO_PIN); // HI   
-   SPI_DDR |= (1<<SPI_MOSI_PIN);
-   SPI_DDR |= (1<<SPI_SCK_PIN);
-   SPI_PORT &= ~(1<<SPI_SCK_PIN); // LO
-   SPI_DDR |= (1<<SPI_SS_PIN);
-   SPI_PORT |= (1<<SPI_SS_PIN); // HI
-    */
-   
+   SPI_DDR &= ~(1<<SPI_MI);
+   SPI_PORT &= ~(1<<SPI_MI); // HI
+   SPI_DDR |= (1<<SPI_MO);
+   SPI_PORT |= (1<<SPI_MO);
+   SPI_DDR |= (1<<SPI_CLK);
+   //SPI_PORT &= ~(1<<SPI_SCK); // LO
+   SPI_DDR |= (1<<SPI_SS);
+   SPI_PORT |= (1<<SPI_SS); // HI
+    
+   /*
    // Slave init
-   SPI_DDR |= (1<<SPI_MISO_PIN); // Output
+   SPI_DDR |= (1<<SPI_MI); // Output
    //SPI_PORT &= ~(1<<SPI_MISO_PIN); // HI
-   SPI_DDR &= ~(1<<SPI_MOSI_PIN); // Input
-   SPI_DDR &= ~(1<<SPI_SCK_PIN); // Input
+   SPI_DDR &= ~(1<<SPI_MO); // Input
+   SPI_DDR &= ~(1<<SPI_SCK); // Input
    //SPI_PORT &= ~(1<<SPI_SCK_PIN); // LO
-   SPI_DDR &= ~(1<<SPI_SS_PIN); // Input
-   SPI_PORT |= (1<<SPI_SS_PIN); // HI
-
+   SPI_DDR &= ~(1<<SPI_SS); // Input
+   SPI_PORT |= (1<<SPI_SS); // HI
+   */
    
    
    
@@ -457,41 +473,42 @@ void SPI_PORT_Init(void) // SPI-Pins aktivieren
 void SPI_ADC_init(void) // SS-Pin fuer EE aktivieren
 {
    
-   SPI_DDR |= (1<<SPI_SS_PIN);
-   SPI_PORT |= (1<<SPI_SS_PIN); // HI
+   SPI_DDR |= (1<<SPI_SS);
+   SPI_PORT |= (1<<SPI_SS); // HI
 }
 
 
-
+/*
 void spi_start(void) // SPI-Pins aktivieren
 {
    //http://www.atmel.com/dyn/resources/prod_documents/doc2467.pdf  page:165
    //Master init
    // Set MOSI and SCK output, all others input
-   SPI_DDR &= ~(1<<SPI_MISO_PIN);
-   SPI_PORT &= ~(1<<SPI_MISO_PIN); // LO
+   SPI_DDR &= ~(1<<SPI_MI);
+   SPI_PORT &= ~(1<<SPI_MI); // LO
    
-   SPI_DDR |= (1<<SPI_MOSI_PIN);
-   SPI_PORT &= ~(1<<SPI_MOSI_PIN); // LO
+   SPI_DDR |= (1<<SPI_MO);
+   SPI_PORT &= ~(1<<SPI_MO); // LO
    
-   SPI_DDR |= (1<<SPI_SCK_PIN);
-   SPI_PORT &= ~(1<<SPI_SCK_PIN); // LO
+   SPI_DDR |= (1<<SPI_SCK);
+   SPI_PORT &= ~(1<<SPI_SCK); // LO
    
-   SPI_DDR |= (1<<SPI_SS_PIN);
-   SPI_PORT |= (1<<SPI_SS_PIN); // HI
+   SPI_DDR |= (1<<SPI_SS);
+   SPI_PORT |= (1<<SPI_SS); // HI
   }
 
 void spi_end(void) // SPI-Pins deaktivieren
 {
    SPCR=0;
    
-   SPI_DDR &= ~(1<<SPI_MOSI_PIN); // MOSI off
-   SPI_DDR &= ~(1<<SPI_SCK_PIN); // SCK off
-   SPI_DDR &= ~(1<<SPI_SS_PIN); // SS off
+   SPI_DDR &= ~(1<<SPI_MO); // MOSI off
+   SPI_DDR &= ~(1<<SPI_SCK); // SCK off
+   SPI_DDR &= ~(1<<SPI_SS); // SS off
    
    //SPI_RAM_DDR &= ~(1<<SPI_RAM_CS_PIN); // RAM-CS-PIN off
    //SPI_EE_DDR &= ~(1<<SPI_EE_CS_PIN); // EE-CS-PIN off
 }
+*/
 
 /*
 void spi_slave_init()
@@ -597,7 +614,7 @@ void timer0 (void) // Grundtakt fuer Stoppuhren usw.
 	//TCCR0 |= (1<<CS01)|(1<<CS02);			// clock	/64
 	//TCCR0B |= (1<<CS02)| (1<<CS02);			// clock	/256
 	//TCCR0 |= (1<<CS00)|(1<<CS02);			// clock /1024
-	
+	/*
    TCCR0B |= (1 << CS02);//
    //TCCR0B |= (1 << CS00);
    
@@ -608,6 +625,15 @@ void timer0 (void) // Grundtakt fuer Stoppuhren usw.
 	//TIFR |= (1<<TOV0);							//Clear TOV0 Timer/Counter Overflow Flag. clear pending interrupts
 	TIMSK0 |= (1<<TOIE0);							//Overflow Interrupt aktivieren
 	TCNT0 = 0;					//RŸcksetzen des Timers
+*/
+   TCCR0A = (1<<WGM01);////|(1<<COM0A0); 		// timer0 im ctc mode
+   TIMSK0 = 1<<OCIE0A;		// compare interrupt an
+   
+//   OCR0A = TOP_OCR;		// maximum bis wo gezaehlt wird bevor compare match
+   OCR0A = 0xF0;		// maximum bis wo gezaehlt wird bevor compare match
+   
+   TCCR0B |= (1 << CS00)| (1<CS01);		// wenn prescaler gesetzt wird, lauft timer los
+   
 }
 
 /*
@@ -630,12 +656,22 @@ void timer0 (void) // Grundtakt fuer Stoppuhren usw.
 volatile uint16_t timer2Counter=0;
 volatile uint16_t timer2BatterieCounter=0;
 
+
+ISR (TIMER0_COMPA_vect)
+{
+   TimingDelay = (TimingDelay==0) ? 0 : TimingDelay-1;
+   //lcd_gotoxy(0,0);
+   //lcd_puthex(TimingDelay);
+}
+
+
 #pragma mark TIMER0_OVF
 
 ISR (TIMER0_OVF_vect)
 {
    mscounter++;
-    
+   //TimingDelay--;	// fuer mmc.c
+   
    if (mscounter%BLINK_DIV ==0)
    {
       blinkcounter++;
@@ -854,7 +890,7 @@ uint8_t Tastenwahl(uint8_t Tastaturwert)
 #define setbit(port, bit) (port) |= (1 << (bit))
 #define clearbit(port, bit) (port) &= ~(1 << (bit))
 
-
+#define SPI_MOSI           PB2
 
 // MARK:  - main
 int main (void)
@@ -877,7 +913,7 @@ int main (void)
    
    // ---------------------------------------------------
    // in attach verschobe, nur wenn USB eingesteckt
-     usb_init();
+   usb_init();
    	while (!usb_configured()) /* wait */ ;
    
 	// Wait an extra second for the PC's operating system to load drivers
@@ -944,6 +980,7 @@ int main (void)
   // OW_OUT |= (1<<OW_PIN);
    uint8_t i=0;
    uint8_t nSensors=0;
+   /*
    uint8_t err = ow_reset();
    lcd_gotoxy(18,0);
    lcd_puthex(err);
@@ -979,9 +1016,9 @@ int main (void)
       gTempdata[i]=0;
       i++;
    }
-
+*/
    // DS1820 init-stuff end
-
+   SPI_PORT_Init();
 	
 
    // ---------------------------------------------------
@@ -993,7 +1030,7 @@ int main (void)
    // ---------------------------------------------------
    
   // timer1(); PORTB5,6
-   
+   timer0();
    sei();
    
 
@@ -1007,16 +1044,17 @@ int main (void)
    OSZIPORTDDR |= (1<<PULSA);	//Pin 0 von  als Ausgang fuer OSZI
    OSZIPORT |= (1<<PULSA);		// HI
    
- //  OSZIPORTDDR |= (1<<OSZI_PULS_B);		//Pin 1 von  als Ausgang fuer OSZI
- //  OSZIPORT |= (1<<OSZI_PULS_B);		//Pin   von   als Ausgang fuer OSZI
+   // SourceCodeV3
+   //lcd_gotoxy(0,1);
+   /*
+   uint8_t mmcerr = mmc_init();
+   lcd_gotoxy(10,0);
+   lcd_putc('m');
+   lcd_puthex(mmcerr);
+   */
+   DDRB |= (1<<2);
    
-   //DDRD |= (1<<4);
-   //PORTD |= (1<<4);
-   //OSZIA_HI;
-   //OSZIPORT |= (1<<OSZI_PULS_A);
-   
-   
-// MARK:  while
+#pragma mark  while
    while (1)
 	{
       //OSZI_B_LO;
@@ -1033,6 +1071,14 @@ int main (void)
       
 		if (loopcount0==0xDFFF)
 		{
+         /*
+         SPI_PORT ^= (1<<SPI_MI);
+         SPI_PORT ^= (1<<SPI_MO);
+         SPI_PORT ^= (1<<SPI_CLK);
+         SPI_PORT ^= (1<<SPI_SS);
+        */ 
+         //SPI_PORT ^= (1<<PORTB2);
+         //PORTB ^= (1<<2);
          /*
           uint8_t err = ow_reset();
          lcd_gotoxy(12,0);
@@ -1066,7 +1112,7 @@ int main (void)
             //lcd_puthex(spi_rxbuffer[i]);
 //            sendbuffer[i+CODE_OFFSET] = spi_rxbuffer[i];
          }
-
+/*
          lcd_gotoxy(0,1);
          lcd_putc('S');
          //lcd_putc(' ');
@@ -1074,7 +1120,7 @@ int main (void)
           {
              lcd_puthex(sendbuffer[i]);
           }
-
+*/
          /*
          lcd_gotoxy(0,1);
          lcd_putc('R');
@@ -1166,9 +1212,14 @@ int main (void)
          //lcd_puthex(usberfolg);
          
          
-         if(loopcount1%16 == 0)
+         if(loopcount1%8 == 0)
          {
-        
+            
+            uint8_t mmcerr = mmc_init();
+            lcd_gotoxy(10,0);
+            lcd_putc('m');
+            lcd_puthex(mmcerr);
+            
 
 #pragma mark Sensors
          // Temperatur messen mit DS18S20

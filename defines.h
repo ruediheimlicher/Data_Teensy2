@@ -30,14 +30,16 @@
 #define LOOPLEDPORT         PORTD   
 #define LOOPLED             6       // fix verdrahtet
 
-#if(MCU ==atmega32u4)//        # Teensy 2.0
+//#if(MCU ==atmega32u4)//        # Teensy 2.0
+
 #define SPI_PORT           PORTB
 #define SPI_DDR            DDRB
-#define SPI_MISO           PB3
-#define SPI_MOSI           PB2
-#define SPI_SCLK           PB1
+#define SPI_MI           PB3
+#define SPI_MO           PB2
+#define SPI_CLK           PB1
 #define SPI_SS             PB0
-#endif
+
+//#endif
 
 
 // bits von spistatus
@@ -46,13 +48,15 @@
 #define WRITE_STROM          2
 #define SPI_RUN_BIT        7
 
-#define SOFT_SPI_PORT           PORTB
-#define SOFT_SPI_DDR            DDRB
+#define SOFT_SPI_PORT           PORTD
+#define SOFT_SPI_DDR            DDRD
+#define SOFT_SPI_PIN            PIND
+
 #define SOFT_SPI_MISO           PB3
-#define SOFT_SPI_MOSI           PB2
+#define SOFT_SPI_MOSI           PB7
 #define SOFT_SPI_SCLK           PB1
-#define SOFT_SPI_SS_0            PB0
-#define SOFT_SPI_SS_1            PB0
+#define SOFT_SPI_SS_0           PB0
+#define SOFT_SPI_SS_1           PB0
 
 
 #define DSLO 8

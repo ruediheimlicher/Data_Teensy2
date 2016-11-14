@@ -20,16 +20,16 @@
 #define OSZIHI OSZIPORT |= (1<<PULS)
 #define OSZITOGG OSZIPORT ^= (1<<PULS)
 */
-#define SPI_DDR			DDRD						// DDR fuer SPI
-#define SPI_PORT		PORTD						// Port fuer SPI
+//#define SPI_DDR			DDRD						// DDR fuer SPI
+//#define SPI_PORT		PORTD						// Port fuer SPI
 #define SPI_PORTPIN	PIND						// Port-Pin fuer SPI
 
 // ************************************************
 // Modifizierte Belegung fuer Betrieb mit Webserver
 // ************************************************
 
-#define SPI_MOSI		PORTD0					// Eingang fuer Daten zum Slave
-#define SPI_MISO		PORTD1					// Ausgang fuer Daten vom Slave
+//#define SPI_MO		PORTD0					// Eingang fuer Daten zum Slave
+//#define SPI_MI		PORTD1					// Ausgang fuer Daten vom Slave
 #define SPI_SCK			PORTD2					// Ausgang fuer CLK
 #define SPI_CS_HC		PORTD3					// Ausgang CS fuer Slave
 
@@ -124,11 +124,11 @@ uint8_t SPI_shift_out_byte(uint8_t out_byte);
 
 void Init_SPI_Master(void) 
 { 
-	SPI_DDR |= ((1<<SPI_MOSI)|(1<<SPI_SCK)|(1<<SPI_CS_HC));	// Set MOSI , SCK , and SS output 
+	SPI_DDR |= ((1<<SPI_MO)|(1<<SPI_SCK)|(1<<SPI_CS_HC));	// Set MOSI , SCK , and SS output 
 	SPI_PORT |=(1<<SPI_SCK);
 
-	SPI_DDR &= ~(1<<SPI_MISO);																// MISO Eingang
-	SPI_PORT |=(1<<SPI_MISO);																	// HI
+	SPI_DDR &= ~(1<<SPI_MI);																// MISO Eingang
+	SPI_PORT |=(1<<SPI_MI);																	// HI
 
 
 
@@ -136,7 +136,7 @@ void Init_SPI_Master(void)
 
 void Clear_SPI_Master(void)
 {
-	SPI_PORT |= ((0<<SPI_MOSI)|(0<<SPI_SCK)|(0<<SPI_CS_HC));	// Set MOSI , SCK , and SS LO 
+	SPI_PORT |= ((0<<SPI_MO)|(0<<SPI_SCK)|(0<<SPI_CS_HC));	// Set MOSI , SCK , and SS LO 
 
    
 }
@@ -152,12 +152,12 @@ uint8_t SPI_shift_out_byte(uint8_t out_byte)
 		if (out_byte & 0x80)
 		{
 			/* this bit is high */
-			SPI_PORT |=_BV(SPI_MOSI); // MOSI HI
+			SPI_PORT |=_BV(SPI_MO); // MOSI HI
 		}
 		else
 		{
 			/* this bit is low */
-			SPI_PORT &= ~_BV(SPI_MOSI); // MOSI LO						
+			SPI_PORT &= ~_BV(SPI_MO); // MOSI LO						
 		}
 		_delay_us(2*out_PULSE_DELAY);
 		//_delay_us(20);
@@ -167,7 +167,7 @@ uint8_t SPI_shift_out_byte(uint8_t out_byte)
 		_delay_us(2*out_PULSE_DELAY);		
 		
 		// Slave lesen von MISO
-		if (SPI_PORTPIN & (1<<SPI_MISO))	// Bit vom Slave ist HI
+		if (SPI_PORTPIN & (1<<SPI_MI))	// Bit vom Slave ist HI
 		{
 			in_byte |= (1<<(7-i));
 		}
