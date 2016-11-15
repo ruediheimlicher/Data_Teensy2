@@ -76,7 +76,11 @@ void dly_us (UINT n)	/* Delay n microseconds (avr-gcc -Os) */
 #if F_CPU >= 12000000
 		PINB; PINB;
 #endif
-#if F_CPU >= 14000000
+#if F_CPU >= 16000000
+      PINB; PINB; PINB;
+#endif
+      
+#if F_CPU >= 17000000
 #error Too fast clock
 #endif
 	} while (--n);
@@ -154,7 +158,76 @@ void xmit_mmc (
 		if (d & 0x01) DI_H(); else DI_L();	/* bit0 */
 		CK_H(); CK_L();
 	} while (--bc);
+
 }
+
+DRESULT mmc_disk_write (
+                        const BYTE *buff,	/* Pointer to the data to be written */
+                        DWORD sector,		/* Start sector number (LBA) */
+                        UINT count			/* Sector count (1..128) */
+)
+{
+   if (!count) return RES_PARERR;
+   if (Stat & STA_NOINIT) return RES_NOTRDY;
+   if (Stat & STA_PROTECT) return RES_WRPRT;
+   
+   if (!(CardType & CT_BLOCK)) sector *= 512;	/* Convert to byte address if needed */
+   
+   if (count == 1) {	/* Single block write */
+      if ((send_cmd(CMD24, sector) == 0)	/* WRITE_BLOCK */
+          && xmit_datablock(buff, 0xFE))
+         count = 0;
+   }
+   else {				/* Multiple block write */
+      if (CardType & CT_SDC) send_cmd(ACMD23, count);
+      if (send_cmd(CMD25, sector) == 0) {	/* WRITE_MULTIPLE_BLOCK */
+         do {
+            if (!xmit_datablock(buff, 0xFC)) break;
+            buff += 512;
+         } while (--count);
+         if (!xmit_datablock(0, 0xFD))	/* STOP_TRAN token */
+            count = 1;
+      }
+   }
+   deselect();
+   
+   return count ? RES_ERROR : RES_OK;
+}
+
+
+/* Send a data block fast */
+static
+void xmit_spi_multi (
+                     const BYTE *p,	/* Data block to be sent */
+                     UINT cnt		/* Size of data block */
+)
+{
+   do {
+      SPDR = *p++;
+      loop_until_bit_is_set(SPSR, SPIF);
+      SPDR = *p++;
+      loop_until_bit_is_set(SPSR, SPIF);
+   } while (cnt -= 2);
+}
+
+
+
+/*-----------------------------------------------------------------------*/
+/* Transmit/Receive data from/to MMC via SPI  (Platform dependent)       */
+/*-----------------------------------------------------------------------*/
+
+/* Exchange a byte */
+static
+BYTE xchg_spi (		/* Returns received data */
+               BYTE dat		/* Data to be sent */
+)
+{
+   SPDR = dat;
+   loop_until_bit_is_set(SPSR, SPIF);
+   return SPDR;
+}
+
+
 
 
 
@@ -315,6 +388,7 @@ int xmit_datablock (	/* 1:OK, 0:Failed */
 /* Send a command packet to the card                                     */
 /*-----------------------------------------------------------------------*/
 
+
 static
 BYTE send_cmd (		/* Returns command response (bit7==1:Send failed)*/
 	BYTE cmd,		/* Command byte */
@@ -331,7 +405,8 @@ BYTE send_cmd (		/* Returns command response (bit7==1:Send failed)*/
 	}
 
 	/* Select the card and wait for ready except to stop multiple block read */
-	if (cmd != CMD12) {
+	if (cmd != CMD12)
+   {
 		deselect();
 		if (!select()) return 0xFF;
 	}
@@ -346,7 +421,10 @@ BYTE send_cmd (		/* Returns command response (bit7==1:Send failed)*/
 	if (cmd == CMD0) n = 0x95;		/* (valid CRC for CMD0(0)) */
 	if (cmd == CMD8) n = 0x87;		/* (valid CRC for CMD8(0x1AA)) */
 	buf[5] = n;
+   
 	xmit_mmc(buf, 6);
+   
+   //xmit_datablock(buf, 6);
 
 	/* Receive command response */
 	if (cmd == CMD12) rcvr_mmc(&d, 1);	/* Skip a stuff byte when stop reading */
