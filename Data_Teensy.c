@@ -34,6 +34,8 @@
 
 #include "ds18x20.c"
 
+#include "Generic/mainfkt.c"
+
 // USB
 #define CPU_PRESCALE(n)	(CLKPR = 0x80, CLKPR = (n))
 
