@@ -255,6 +255,17 @@ uint16_t get_key_press( uint16_t key_mask )
 
 */
 
+// MARK: chan def
+
+volatile uint8_t mmcstatus=0;
+
+
+BYTE RtcOk;				/* RTC is available */
+
+#define DRV_MMC 1
+#define MMC_OK 0
+#define MMC_WRITE_OK 1
+#define MMC_READ_OK 2
 
 #pragma mark 1-wire
 
@@ -439,6 +450,8 @@ void SPI_PORT_Init(void) // SPI-Pins aktivieren
    SPI_PORT &= ~(1<<SPI_SCK); // LO
    SPI_DDR |= (1<<SPI_SS);
    SPI_PORT |= (1<<SPI_SS); // HI
+   // hardware spi: bus clock = idle low, spi clock / 128 , spi master mode
+   SPCR = (1<<SPE)|(1<<MSTR)|(1<<SPR0)|(1<<SPR1);
    
    /*
    // Slave init
@@ -654,7 +667,8 @@ ISR (TIMER0_OVF_vect)
    }
 //   Timer++;			/* Performance counter for this module */
 //   cf_disk_timerproc();	/* Drive timer procedure of low level disk I/O module */
-   OSZIA_TOGG;
+   mmc_disk_timerproc();
+   //OSZIA_TOGG;
    
 }
 
@@ -1034,9 +1048,17 @@ int main (void)
    //PORTD |= (1<<4);
    //OSZIA_HI;
    //OSZIPORT |= (1<<OSZI_PULS_A);
-   
-   
-// MARK:  while
+   SPI_PORT_Init();
+// MARK: chan init
+   /*
+   */
+   lcd_putc('m');
+   volatile uint8_t readbuffer[512] = {};
+   volatile uint8_t writebuffer[512] = {};
+   lcd_putc('n');
+
+
+   // MARK:  while
    while (1)
 	{
       
@@ -1188,13 +1210,58 @@ int main (void)
          uint8_t usberfolg = usb_rawhid_send((void*)sendbuffer, 50);
          //lcd_puthex(usberfolg);
          
+// MARK:  mmc
          
-         if(loopcount1%8 == 0)
+         if((loopcount1%16 == 8) && (mmcstatus & (1<< MMC_OK)) && (mmcstatus & (1<< MMC_WRITE_OK))&& ! (mmcstatus & (1<< MMC_READ_OK)))
          {
-            // Chan begin
+            lcd_gotoxy(8,1);
+            //lcd_putc('m');
+            //unsigned char* readbuffer = malloc(512);
+            
+            //lcd_putc('n');
+            
+            DRESULT readresult = mmc_disk_write((void*)readbuffer,0,1);
             
             
-            // chan end
+            //lcd_putc(' ');
+            lcd_gotoxy(10,0);
+            lcd_putc('r');
+            lcd_puthex(readresult);
+            
+            if (readresult == 0)
+            {
+               mmcstatus |= (1<< MMC_READ_OK);
+               //lcd_putint(strlen(readbuffer));
+               lcd_putc('*');
+               lcd_puthex(readbuffer[0]);
+               lcd_putc('*');
+            }
+            // free(readbuffer);
+         }
+         if(loopcount1%16 == 0)
+         {
+            if (!(mmcstatus & (1<< MMC_OK)))
+            {
+               mmcstatus |= (1<< MMC_OK);
+               char marke = 'a';
+               // Chan begin
+               lcd_gotoxy(12,1);
+               DRESULT result =  mmc_disk_initialize ();
+               lcd_gotoxy(0,1);
+               lcd_puthex(result);
+               writebuffer[0] = 0x13;
+              
+               DRESULT writeresult = mmc_disk_write((void*)writebuffer,0,1);
+               lcd_putc(' ');
+               lcd_putc('w');
+               lcd_puthex(writeresult);
+               if (writeresult == 0)
+               {
+                  mmcstatus |= (1<< MMC_WRITE_OK);
+               }
+               
+               // chan end
+            }
             
 #pragma mark Sensors
             // Temperatur messen mit DS18S20

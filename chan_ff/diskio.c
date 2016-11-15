@@ -14,7 +14,7 @@
 #ifdef DRV_MMC
 #include "mmc_avr.h"	/* Header file of existing SD control module */
 #endif
-
+#include "mmc_avr_spi.c"	/* Header file of existing SD control module */
 
 /*-----------------------------------------------------------------------*/
 /* Get Drive Status                                                      */

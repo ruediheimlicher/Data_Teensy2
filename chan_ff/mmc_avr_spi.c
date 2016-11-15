@@ -16,12 +16,12 @@
 #include "mmc_avr.h"
 
 /* Peripheral controls (Platform dependent) */
-#define CS_LOW()		To be filled	/* Set MMC_CS = low */
-#define	CS_HIGH()		To be filled	/* Set MMC_CS = high */
-#define MMC_CD			To be filled	/* Test if card detected.   yes:true, no:false, default:true */
-#define MMC_WP			To be filled	/* Test if write protected. yes:true, no:false, default:false */
-#define	FCLK_SLOW()		To be filled	/* Set SPI slow clock (100-400kHz) */
-#define	FCLK_FAST()		To be filled	/* Set SPI fast clock (20MHz max) */
+#define CS_LOW SPI_PORT &= ~(1<<SPI_SS)	/*	To be filled	 Set MMC_CS = low */
+#define	CS_HIGH  SPI_PORT |= (1<<SPI_SS)	/*	To be filled	 Set MMC_CS = high */
+#define MMC_CD		1/*	To be filled	 Test if card detected.   yes:true, no:false, default:true */
+#define MMC_WP		0 /*	To be filled	 Test if write protected. yes:true, no:false, default:false */
+#define	FCLK_SLOW()	/*	To be filled	 Set SPI slow clock (100-400kHz) */
+#define	FCLK_FAST()	///	To be filled	 Set SPI fast clock (20MHz max)
 
 
 /*--------------------------------------------------------------------------
@@ -76,15 +76,13 @@ static
 void power_on (void)
 {
 	/* Trun socket power on and wait for 10ms+ (nothing to do if no power controls) */
-	To be filled
 
 
 	/* Configure MOSI/MISO/SCLK/CS pins */
-	To be filled
 
 
 	/* Enable SPI module in SPI mode 0 */
-	To be filled
+	//To be filled
 }
 
 
@@ -92,15 +90,15 @@ static
 void power_off (void)
 {
 	/* Disable SPI function */
-	To be filled
+	//To be filled
 
 
 	/* De-configure MOSI/MISO/SCLK/CS pins (set hi-z) */
-	To be filled
+	//To be filled
 
 
 	/* Trun socket power off (nothing to do if no power controls) */
-	To be filled
+	//To be filled
 }
 
 
@@ -185,7 +183,7 @@ int wait_ready (	/* 1:Ready, 0:Timeout */
 static
 void deselect (void)
 {
-	CS_HIGH();		/* Set CS# high */
+	CS_HIGH;		/* Set CS# high */
 	xchg_spi(0xFF);	/* Dummy clock (force DO hi-z for multiple slave SPI) */
 }
 
@@ -198,7 +196,7 @@ void deselect (void)
 static
 int select (void)	/* 1:Successful, 0:Timeout */
 {
-	CS_LOW();		/* Set CS# low */
+	CS_LOW;		/* Set CS# low */
 	xchg_spi(0xFF);	/* Dummy clock (force DO enabled) */
 	if (wait_ready(500)) return 1;	/* Wait for card ready */
 
@@ -329,30 +327,54 @@ BYTE send_cmd (		/* Returns R1 resp (bit7==1:Send failed) */
 
 DSTATUS mmc_disk_initialize (void)
 {
+   char mark = 'a';
 	BYTE n, cmd, ty, ocr[4];
+   //lcd_putc(mark++);
 
-
-	power_off();						/* Turn off the socket power to reset the card */
+	//power_off();						/* Turn off the socket power to reset the card */
 	for (Timer1 = 10; Timer1; ) ;		/* Wait for 100ms */
-	if (Stat & STA_NODISK) return Stat;	/* No card in the socket? */
-
-	power_on();							/* Turn on the socket power */
-	FCLK_SLOW();
+	
+   if (Stat & STA_NODISK)
+   {
+      lcd_putc('x');
+      return Stat;	/* No card in the socket? */
+   }
+   //lcd_putc(mark++);
+	//power_on();							/* Turn on the socket power */
+	//lcd_putc('d');
+   
+   FCLK_SLOW();
+   //lcd_putc('f');
+   
 	for (n = 10; n; n--) xchg_spi(0xFF);	/* 80 dummy clocks */
-
+   //lcd_putc('g');
 	ty = 0;
-	if (send_cmd(CMD0, 0) == 1) {			/* Put the card SPI mode */
-		Timer1 = 100;						/* Initialization timeout of 1000 msec */
-		if (send_cmd(CMD8, 0x1AA) == 1) {	/* Is the card SDv2? */
-			for (n = 0; n < 4; n++) ocr[n] = xchg_spi(0xFF);	/* Get trailing return value of R7 resp */
-			if (ocr[2] == 0x01 && ocr[3] == 0xAA) {				/* The card can work at vdd range of 2.7-3.6V */
+	if (send_cmd(CMD0, 0) == 1)
+   {			/* Put the card SPI mode */
+		//lcd_putc(mark++);
+      Timer1 = 100;						/* Initialization timeout of 1000 msec */
+		if (send_cmd(CMD8, 0x1AA) == 1)
+      {
+         //lcd_putc('i');
+         /* Is the card SDv2? */
+			for (n = 0; n < 4; n++)
+         {
+            ocr[n] = xchg_spi(0xFF);	/* Get trailing return value of R7 resp */
+         }
+			if (ocr[2] == 0x01 && ocr[3] == 0xAA)
+         {				/* The card can work at vdd range of 2.7-3.6V */
 				while (Timer1 && send_cmd(ACMD41, 1UL << 30));	/* Wait for leaving idle state (ACMD41 with HCS bit) */
-				if (Timer1 && send_cmd(CMD58, 0) == 0) {		/* Check CCS bit in the OCR */
+				if (Timer1 && send_cmd(CMD58, 0) == 0)
+            {		/* Check CCS bit in the OCR */
 					for (n = 0; n < 4; n++) ocr[n] = xchg_spi(0xFF);
 					ty = (ocr[0] & 0x40) ? CT_SD2 | CT_BLOCK : CT_SD2;	/* Check if the card is SDv2 */
 				}
 			}
-		} else {							/* SDv1 or MMCv3 */
+		}
+      else
+      {
+         //lcd_putc('k');
+         /* SDv1 or MMCv3 */
 			if (send_cmd(ACMD41, 0) <= 1) 	{
 				ty = CT_SD1; cmd = ACMD41;	/* SDv1 */
 			} else {
@@ -363,10 +385,14 @@ DSTATUS mmc_disk_initialize (void)
 				ty = 0;
 		}
 	}
+   lcd_putc('y');
+   lcd_puthex(ty);
 	CardType = ty;
 	deselect();
 
-	if (ty) {			/* Initialization succeded */
+	if (ty)
+   {			/* Initialization succeded */
+      lcd_puts("OK");
 		Stat &= ~STA_NOINIT;		/* Clear STA_NOINIT */
 		FCLK_FAST();
 	} else {			/* Initialization failed */
@@ -400,7 +426,8 @@ DRESULT mmc_disk_read (
 )
 {
 	BYTE cmd;
-
+   //lcd_gotoxy(10,1);
+   //lcd_putc('R');
 
 	if (!count) return RES_PARERR;
 	if (Stat & STA_NOINIT) return RES_NOTRDY;
@@ -433,6 +460,8 @@ DRESULT mmc_disk_write (
 	UINT count			/* Sector count (1..128) */
 )
 {
+   //lcd_gotoxy(10,0);
+   //lcd_putc('W');
 	if (!count) return RES_PARERR;
 	if (Stat & STA_NOINIT) return RES_NOTRDY;
 	if (Stat & STA_PROTECT) return RES_WRPRT;
@@ -634,7 +663,7 @@ DRESULT mmc_disk_ioctl (
 void mmc_disk_timerproc (void)
 {
 	BYTE n, s;
-
+   OSZIA_TOGG;
 
 	n = Timer1;				/* 100Hz decrement timer */
 	if (n) Timer1 = --n;

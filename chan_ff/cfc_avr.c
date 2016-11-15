@@ -19,19 +19,19 @@
 
 /* Contorl ports */
 #define	CTRL_PORT		PORTC
-#define	CTRL_DDR		DDRC
-#define	DAT_PORT		PORTC
+#define	CTRL_DDR       DDRC
+#define	DAT_PORT       PORTC
 #define	DAT_DDR			DDRC
 #define	DAT_PIN			PINC
 
 /* Bit definitions for control port */
-#define	REG_DATA		0b11110000	/* Select Data register */
+#define	REG_DATA       0b11110000	/* Select Data register */
 #define	REG_ERROR		0b11110001	/* Select Error register */
 #define	REG_FEATURES	0b11110001	/* Select Features register */
 #define	REG_COUNT		0b11110010	/* Select Count register */
 #define	REG_SECTOR		0b11110011	/* Select Sector register */
-#define	REG_CYLL		0b11110100	/* Select Cylinder low register */
-#define	REG_CYLH		0b11110101	/* Select Cylinder high regitser */
+#define	REG_CYLL       0b11110100	/* Select Cylinder low register */
+#define	REG_CYLH       0b11110101	/* Select Cylinder high regitser */
 #define	REG_DEV			0b11110110	/* Select Device register */
 #define	REG_COMMAND		0b11110111	/* Select Command register */
 #define	REG_STATUS		0b11110111	/* Select Status register */
@@ -509,9 +509,12 @@ void cf_disk_timerproc (void)
 	t = Timer;					/* 100Hz decrement timer */
 	if (t) Timer = --t;
 
-	if (CF_EXIST) {	/* Card inserted */
+	if (CF_EXIST)
+   {	/* Card inserted */
 		Stat &= ~STA_NODISK;
-	} else {		/* Socket empty */
+	}
+   else
+   {		/* Socket empty */
 		Stat |= STA_NODISK | STA_NOINIT;
 	}
 }

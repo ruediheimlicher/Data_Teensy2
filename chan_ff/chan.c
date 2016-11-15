@@ -11,10 +11,10 @@
 #include "uart.h"
 #include "xitoa.h"
 #include "ff.h"
-#include "diskio.h"
+#include "diskio.c"
 #include "rtc.h"
 #include <avr/pgmspace.h>
-#include "cfc_avr.c"
+//#include "cfc_avr.c"
 #include "integer.h"
 
 //FUSES = {0xF7, 0x91, 0xFC};
@@ -27,9 +27,9 @@ and use these values to program the fuse bits. */
 
 
 
-BYTE Buff[4096];	/* Working buffer */
+//BYTE Buff[4096];	/* Working buffer */
 
-FATFS FatFs[2];		/* File system object for each logical drive */
+//FATFS FatFs[2];		/* File system object for each logical drive */
 FIL File[2];		/* File object */
 DIR Dir;			/* Directory object */
 FILINFO Finfo;
@@ -38,7 +38,7 @@ WORD AccFiles, AccDirs;
 
 BYTE RtcOk;				/* RTC is available */
 
-//volatile unsigned int Timer;	/* Performance timer (100Hz increment) */
+volatile unsigned int Timer;	/* Performance timer (100Hz increment) */
 
 
 
@@ -81,7 +81,8 @@ ISR(TIMER0_COMPA_vect)
 {
    OSZIA_TOGG;
 	Timer++;			/* Performance counter for this module */
-	cf_disk_timerproc();	/* Drive timer procedure of low level disk I/O module */
+   mmc_disk_timerproc();
+   //	cf_disk_timerproc();	/* Drive timer procedure of low level disk I/O module */
 }
 
 
@@ -211,12 +212,12 @@ void ioinit (void)
 
 int mainfkt (void)
 {
-	char line[120];
+	//char line[120];
 	char *ptr, *ptr2;
 	long p1, p2, p3;
 	FRESULT fr;
 	BYTE b1, *bp;
-	UINT s1, s2, cnt, blen = sizeof Buff;
+	//UINT s1, s2, cnt, blen = sizeof Buff;
 	DWORD ofs, sect = 0;
 	FATFS *fs;
 	RTC rtc;
@@ -239,17 +240,6 @@ int mainfkt (void)
 	}
 */
 
-	for (;;) {
-		ptr = line;
-
-		get_line(ptr, sizeof line);
-		switch (*ptr++)
-      {
-			break;
-
-
-		}// switch
-	}
 
 }
 
