@@ -79,6 +79,7 @@ DWORD get_fattime (void)
 
 ISR(TIMER0_COMPA_vect)
 {
+   OSZIA_TOGG;
 	Timer++;			/* Performance counter for this module */
 	cf_disk_timerproc();	/* Drive timer procedure of low level disk I/O module */
 }
@@ -196,7 +197,7 @@ void ioinit (void)
 	/* Start 100Hz system timer with TC0 */
 	OCR0A = F_CPU / 1024 / 100 - 1;
 	TCCR0A = _BV(WGM01);
-	TCCR0B = 0b101;
+//	TCCR0B = 0b101;
 	TIMSK0 = _BV(OCIE0A);
 
 	sei();

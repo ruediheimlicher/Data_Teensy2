@@ -601,9 +601,9 @@ void timer0 (void) // Grundtakt fuer Stoppuhren usw.
 	//TCCR0 |= (1<<CS00)|(1<<CS02);			// clock /1024
 	
    TCCR0B |= (1 << CS02);//
-   //TCCR0B |= (1 << CS00);
+   TCCR0B |= (1 << CS00);
    
-   TCCR0B |= (1 << CS10); // Set up timer
+   //TCCR0B |= (1 << CS10); // Set up timer
 	
    OCR0A = 0x02;
 	
@@ -657,6 +657,8 @@ ISR (TIMER0_OVF_vect)
    OSZIA_TOGG;
    
 }
+
+
 
 #pragma mark timer1
 void timer1(void)
@@ -1011,7 +1013,7 @@ int main (void)
    // ---------------------------------------------------
    
   // timer1(); PORTB5,6
-   
+   timer0();
    sei();
    
 
@@ -1037,6 +1039,7 @@ int main (void)
 // MARK:  while
    while (1)
 	{
+      
       //OSZI_B_LO;
 		//Blinkanzeige
 		loopcount0+=1;
