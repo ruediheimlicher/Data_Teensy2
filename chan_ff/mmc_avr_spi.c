@@ -473,7 +473,8 @@ DRESULT mmc_disk_write (
 			&& xmit_datablock(buff, 0xFE))
 			count = 0;
 	}
-	else {				/* Multiple block write */
+	else
+   {				/* Multiple block write */
 		if (CardType & CT_SDC) send_cmd(ACMD23, count);
 		if (send_cmd(CMD25, sector) == 0) {	/* WRITE_MULTIPLE_BLOCK */
 			do {
