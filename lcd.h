@@ -19,12 +19,12 @@
 /* AVR port and pins connected to '164 and/or LCD */
 
 #if(MCU ==atmega32u4)//        # Teensy 2.0
-#define LCD_PORT                 PORTB
-#define LCD_DDR                  DDRB
+#define LCD_PORT                 PORTF
+#define LCD_DDR                  DDRF
 
-#define LCD_RSDS            4
-#define LCD_ENABLE_PIN          5
-#define LCD_CLOCK_PIN           6
+#define LCD_RSDS                7
+#define LCD_ENABLE_PIN          6
+#define LCD_CLOCK_PIN           5
 
 #elif(MCU == at90usb1286)//      # Teensy++ 2.0
 #define LCD_PORT                PORTF

@@ -284,7 +284,7 @@ uint8_t search_sensors(void)
          lcd_gotoxy(0,1);
          lcd_puts("No Sensor found\0" );
          
-         delay_ms(800);
+         _delay_ms(800);
          lcd_clr_line(1);
          break;
       }
@@ -503,7 +503,8 @@ void spi_slave_init()
 }
 */
 
-void delay_ms(unsigned int ms)/* delay for a minimum of <ms> */
+/*
+void delay_ms(unsigned int ms)// delay for a minimum of <ms> *
 {
 	// we use a calibrated macro. This is more
 	// accurate and not so much compiler dependent
@@ -513,7 +514,7 @@ void delay_ms(unsigned int ms)/* delay for a minimum of <ms> */
 		ms--;
 	}
 }
-
+*/
 // http://www.co-pylit.org/courses/COSC2425/lectures/AVRNetworks/index.html
 
 /* nicht verwendet
@@ -609,6 +610,16 @@ void timer0 (void) // Grundtakt fuer Stoppuhren usw.
 	//TIFR |= (1<<TOV0);							//Clear TOV0 Timer/Counter Overflow Flag. clear pending interrupts
 	TIMSK0 |= (1<<TOIE0);							//Overflow Interrupt aktivieren
 	TCNT0 = 0;					//RŸcksetzen des Timers
+
+// chan
+   OCR0A = F_CPU / 1024 / 100 - 1;
+   TCCR0A = _BV(WGM01);
+ //  TCCR0B = 0b101;
+   TIMSK0 = _BV(OCIE0A);
+   
+   
+   //
+
 }
 
 /*
@@ -641,6 +652,9 @@ ISR (TIMER0_OVF_vect)
    {
       blinkcounter++;
    }
+//   Timer++;			/* Performance counter for this module */
+//   cf_disk_timerproc();	/* Drive timer procedure of low level disk I/O module */
+   OSZIA_TOGG;
    
 }
 
@@ -858,7 +872,7 @@ uint8_t Tastenwahl(uint8_t Tastaturwert)
 
 
 // MARK:  - main
-int mainfkt (void)
+int main (void)
 {
    
    uint16_t tempwert = 444;
@@ -901,17 +915,18 @@ int mainfkt (void)
    // ---------------------------------------------------
 	lcd_initialize(LCD_FUNCTION_8x2, LCD_CMD_ENTRY_INC, LCD_CMD_ON);
    
-	lcd_puts("Guten Tag\0");
-	delay_ms(100);
-	lcd_cls();
+	//lcd_puts("Guten Tag\0");
+	//_delay_ms(100);
+	//lcd_cls();
 	//lcd_puts("READY\0");
 	lcd_puts("V: \0");
 	lcd_puts(VERSION);
+   _delay_ms(100);
    lcd_clr_line(1);
 	
    lcd_gotoxy(0,0);
    lcd_puts("Data_Logger\0");
-   delay_ms(1000);
+   _delay_ms(1000);
    //lcd_cls();
    lcd_clr_line(0);
    
@@ -942,15 +957,17 @@ int mainfkt (void)
 #pragma mark DS1820 init
    
    // DS1820 init-stuff begin
+   
   // OW_OUT |= (1<<OW_PIN);
    uint8_t i=0;
    uint8_t nSensors=0;
+   /*
    uint8_t err = ow_reset();
    lcd_gotoxy(18,0);
    lcd_puthex(err);
    gNsensors = search_sensors();
    
-   delay_ms(100);
+   _delay_ms(100);
    lcd_gotoxy(0,0);
    lcd_puts("Sn:\0");
    lcd_puthex(gNsensors);
@@ -965,7 +982,7 @@ int mainfkt (void)
       gTempdata[i]=0;
       i++;
    }
-   delay_ms(100);
+   _delay_ms(100);
    lcd_gotoxy(0,0);
    lcd_puts("Sens:\0");
    lcd_puthex(gNsensors);
@@ -980,7 +997,7 @@ int mainfkt (void)
       gTempdata[i]=0;
       i++;
    }
-
+*/
    // DS1820 init-stuff end
 
 	
@@ -1068,6 +1085,8 @@ int mainfkt (void)
 //            sendbuffer[i+CODE_OFFSET] = spi_rxbuffer[i];
          }
 
+         // Anzeige sendbuffer
+         /*
          lcd_gotoxy(0,1);
          lcd_putc('S');
          //lcd_putc(' ');
@@ -1075,7 +1094,7 @@ int mainfkt (void)
           {
              lcd_puthex(sendbuffer[i]);
           }
-
+          */
          /*
          lcd_gotoxy(0,1);
          lcd_putc('R');
@@ -1167,48 +1186,52 @@ int mainfkt (void)
          //lcd_puthex(usberfolg);
          
          
-         if(loopcount1%16 == 0)
+         if(loopcount1%8 == 0)
          {
-        
-
-#pragma mark Sensors
-         // Temperatur messen mit DS18S20
-         
-         if (gNsensors) // Sensor eingesteckt
-         {
-            start_temp_meas();
-            delay_ms(800);
-            read_temp_meas();
-            uint8_t line=1;
-            //Sensor 1
-            lcd_gotoxy(10,line);
-            lcd_puts("T:     \0");
-            if (gTempdata[0]/10>=100)
-            {
-               lcd_gotoxy(13,line);
-               lcd_putint((gTempdata[0]/10));
-            }
-            else
-            {
-               lcd_gotoxy(12,line);
-               lcd_putint2((gTempdata[0]/10));
-            }
+            // Chan begin
             
-            lcd_putc('.');
-            lcd_putint1(gTempdata[0]%10);
-         }
-          
-            sendbuffer[DSLO]=((gTempdata[0])& 0x00FF);// T kommt mit Faktor 10 vom DS. Auf TWI ist T verdoppelt
-            sendbuffer[DSHI]=((gTempdata[0]& 0xFF00)>>8);// T kommt mit Faktor 10 vom DS. Auf TWI ist T verdoppelt
-            //lcd_gotoxy(10,0);
-            //lcd_putint(sendbuffer[DSLO]);
-            //lcd_putint(sendbuffer[DSHI]);
-            // Halbgrad addieren
-         if (gTempdata[0]%10 >=5) // Dezimalstelle ist >=05: Wert  aufrunden, 1 addieren
-         {
-           // txbuffer[INNEN] +=1;
-         }
-       } //
+            
+            // chan end
+            
+#pragma mark Sensors
+            // Temperatur messen mit DS18S20
+            
+            if (gNsensors) // Sensor eingesteckt
+            {
+               start_temp_meas();
+               _delay_ms(800);
+               read_temp_meas();
+               uint8_t line=1;
+               //Sensor 1
+               lcd_gotoxy(10,line);
+               lcd_puts("T:     \0");
+               if (gTempdata[0]/10>=100)
+               {
+                  lcd_gotoxy(13,line);
+                  lcd_putint((gTempdata[0]/10));
+               }
+               else
+               {
+                  lcd_gotoxy(12,line);
+                  lcd_putint2((gTempdata[0]/10));
+               }
+               
+               lcd_putc('.');
+               lcd_putint1(gTempdata[0]%10);
+               
+               
+               sendbuffer[DSLO]=((gTempdata[0])& 0x00FF);// T kommt mit Faktor 10 vom DS. Auf TWI ist T verdoppelt
+               sendbuffer[DSHI]=((gTempdata[0]& 0xFF00)>>8);// T kommt mit Faktor 10 vom DS. Auf TWI ist T verdoppelt
+               //lcd_gotoxy(10,0);
+               //lcd_putint(sendbuffer[DSLO]);
+               //lcd_putint(sendbuffer[DSHI]);
+               // Halbgrad addieren
+               if (gTempdata[0]%10 >=5) // Dezimalstelle ist >=05: Wert  aufrunden, 1 addieren
+               {
+                  // txbuffer[INNEN] +=1;
+               }
+            }
+         } // if loopcount1
          
 			
 
