@@ -15,7 +15,7 @@ extern "C" {
 
 /*
 // Atmega8 PORTC PIN3 als Anschluss fuer DS-Sensor
-#define OW_PIN  PORTC3
+#define OW  PORTC3
 #define OW_IN   PINC
 #define OW_OUT  PORTC
 #define OW_DDR  DDRC
@@ -25,7 +25,7 @@ extern "C" {
 //
 //#if(MCU == atmega32u4)//        # Teensy 2.0
    
-#define OW_PIN  PORTB7
+#define OW  PORTB7
    
 #define OW_IN   PINB
 #define OW_OUT  PORTB
@@ -33,7 +33,7 @@ extern "C" {
 
    /*
 #elif(MCU == atmega644p)//        # Atmega644p
-#define OW_PIN  PORTA4
+#define OW  PORTA4
    
 #define OW_IN   PINA
 #define OW_OUT  PORTA

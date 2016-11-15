@@ -131,7 +131,7 @@ void
 lcd_load_byte(uint8_t out_byte)
 {
         /* make sure clock is low */
-        LCD_PORT &= ~_BV(LCD_CLOCK_PIN);
+        LCD_PORT &= ~_BV(LCD_CLOCK);
         
         int i;
         for(i=0; i<8; i++)
@@ -141,20 +141,20 @@ lcd_load_byte(uint8_t out_byte)
                 if (out_byte & 0x80)	// Maske 1000 0000
                 {
                         /* this bit is high */
-                        LCD_PORT |=_BV(LCD_RSDS_PIN); 
+                        LCD_PORT |=_BV(LCD_RSDS); 
                 }
                 else
                 {
                         /* this bit is low */
-                        LCD_PORT &= ~_BV(LCD_RSDS_PIN);
+                        LCD_PORT &= ~_BV(LCD_RSDS);
                 }
                 out_byte = out_byte << 1;
                 
                 /* pulse the the shift register clock */
-                LCD_PORT |= _BV(LCD_CLOCK_PIN);	
+                LCD_PORT |= _BV(LCD_CLOCK);	
 				_delay_us(20);											//CNC 20 statt 40
 				//Clk des Schieberegisters
-                LCD_PORT &= ~_BV(LCD_CLOCK_PIN);
+                LCD_PORT &= ~_BV(LCD_CLOCK);
         }
 }
 
@@ -166,7 +166,7 @@ void
 lcd_send_cmd(void)
 {
         /* Data in '164 is a command, so RS must be low (0) */
-        LCD_PORT &= ~_BV(LCD_RSDS_PIN); 
+        LCD_PORT &= ~_BV(LCD_RSDS); 
         lcd_strobe_E();	
         _delay_us(50);
 }
@@ -179,7 +179,7 @@ void
 lcd_send_char(void)
 {
         /* Data in '164 is a character, so RS must be high (1) */
-        LCD_PORT |= _BV(LCD_RSDS_PIN); 
+        LCD_PORT |= _BV(LCD_RSDS); 
         lcd_strobe_E();
         _delay_us(50);
 }
@@ -293,10 +293,10 @@ void
 lcd_strobe_E(void)
 {
         /* strobe E signal */
-        LCD_PORT |= _BV(LCD_ENABLE_PIN);
+        LCD_PORT |= _BV(LCD_ENABLE);
         _delay_us(450); 
 	//	lcddelay_ms(100);
-        LCD_PORT &= ~_BV(LCD_ENABLE_PIN);
+        LCD_PORT &= ~_BV(LCD_ENABLE);
 }
 
 /*

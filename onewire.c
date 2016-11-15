@@ -25,13 +25,13 @@
 /* Hardware connection, edit as needed     */
 /*******************************************/
 // the bus is on PB4:
-#define OW_GET_IN()    (OW_IN&(1<<OW_PIN))
+#define OW_GET_IN()    (OW_IN&(1<<OW))
 // output and low:
-#define OW_DIR_OUT_LOW()   OW_OUT&=~(1<<OW_PIN);OW_DDR|=1<<OW_PIN
+#define OW_DIR_OUT_LOW()   OW_OUT&=~(1<<OW);OW_DDR|=1<<OW
 // output and high:
-#define OW_DIR_OUT_HIGH()   OW_OUT|=(1<<OW_PIN);OW_DDR|=1<<OW_PIN
+#define OW_DIR_OUT_HIGH()   OW_OUT|=(1<<OW);OW_DDR|=1<<OW
 // if input tie also pullup on:
-#define OW_DIR_IN()    OW_DDR &= ~(1<<OW_PIN);OW_OUT|=1<<OW_PIN
+#define OW_DIR_IN()    OW_DDR &= ~(1<<OW);OW_OUT|=1<<OW
 
 // there is a bit more delay here due to overhead.
 // the overhead is about 7us

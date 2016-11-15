@@ -22,17 +22,17 @@
 #define LCD_PORT                 PORTF
 #define LCD_DDR                  DDRF
 
-#define LCD_RSDS_PIN            7
-#define LCD_ENABLE_PIN          6
-#define LCD_CLOCK_PIN           5
+#define LCD_RSDS            7
+#define LCD_ENABLE          6
+#define LCD_CLOCK           5
 
 #elif(MCU == at90usb1286)//      # Teensy++ 2.0
 #define LCD_PORT                PORTF
 #define LCD_DDR                 DDRF
 
-#define LCD_RSDS_PIN            5
-#define LCD_ENABLE_PIN          6
-#define LCD_CLOCK_PIN           7
+#define LCD_RSDS            5
+#define LCD_ENABLE          6
+#define LCD_CLOCK           7
 
 #endif
 

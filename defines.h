@@ -35,7 +35,7 @@
 #define SPI_DDR            DDRB
 #define SPI_MISO           PB3
 #define SPI_MOSI           PB2
-#define SPI_SCLK           PB1
+#define SPI_SCK           PB1
 #define SPI_SS             PB0
 #endif
 
@@ -309,26 +309,26 @@
 
 #define MASTER_PORT            PORTD   //    
 #define MASTER_DDR             DDRD    //    
-#define MASTER_PIN             PIND    //
+#define MASTER             PIND    //
 // PIN's
-#define SUB_BUSY_PIN             5 // Ausgang fuer busy-Meldung des Sub an Master
+#define SUB_BUSY             5 // Ausgang fuer busy-Meldung des Sub an Master
 
 #define INTERRUPT_PORT            PORTB   //
 #define INTERRUPT_DDR             DDRB    //
-#define INTERRUPT_PIN             PINB    //
+#define INTERRUPT             PINB    //
 // PIN's
-#define MASTER_EN_PIN            7 // Eingang fur PinChange-Interrupt vom Master
+#define MASTER_EN            7 // Eingang fur PinChange-Interrupt vom Master
 
 #define SUB_EN_PORT              PORTE // Gate-Zugang zu EE und RAM fuer Memory-Zugriffe  des Sub
 #define SUB_EN_DDR               DDRE  // mit RAM_CS_HI, EE_CS_HI
 // PIN's
-#define SUB_EN_PIN               0
+#define SUB_EN               0
 
 #define USB_PORT            PORTD   //
 #define USB_DDR             DDRD    //
-#define USB_PIN             PIND    //
+#define USB             PIND    //
 // PIN's
-#define USB_DETECT_PIN      3
+#define USB_DETECT      3
 
 
 

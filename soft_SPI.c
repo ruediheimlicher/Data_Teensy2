@@ -20,18 +20,18 @@
 #define OSZIHI OSZIPORT |= (1<<PULS)
 #define OSZITOGG OSZIPORT ^= (1<<PULS)
 */
-#define SPI_DDR			DDRD						// DDR fuer SPI
-#define SPI_PORT		PORTD						// Port fuer SPI
-#define SPI_PORTPIN	PIND						// Port-Pin fuer SPI
+#define SOFT_SPI_DDR			DDRD						// DDR fuer SPI
+#define SOFT_SPI_PORT		PORTD						// Port fuer SPI
+#define SOFT_SPI_PORTPIN	PIND						// Port-Pin fuer SPI
 
 // ************************************************
 // Modifizierte Belegung fuer Betrieb mit Webserver
 // ************************************************
 
-#define SPI_MOSI		PORTD0					// Eingang fuer Daten zum Slave
-#define SPI_MISO		PORTD1					// Ausgang fuer Daten vom Slave
-#define SPI_SCK			PORTD2					// Ausgang fuer CLK
-#define SPI_CS_HC		PORTD3					// Ausgang CS fuer Slave
+#define SOFT_SPI_MOSI		PORTD0					// Eingang fuer Daten zum Slave
+#define SOFT_SPI_MISO		PORTD1					// Ausgang fuer Daten vom Slave
+#define SOFT_SPI_SCK			PORTD2					// Ausgang fuer CLK
+#define SOFT_SPI_CS_HC		PORTD3					// Ausgang CS fuer Slave
 
 // ************************************************
 // defines fuer cronstatus

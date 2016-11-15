@@ -27,15 +27,16 @@
 #include "defines.h"
 
 //#include "spi.c"
-#include "spi_adc.c"
+//#include "spi_adc.c"
 
 //#include "spi_slave.c"
-#include "soft_SPI.c"
+//#include "soft_SPI.c"
 
 #include "ds18x20.c"
 
 #include "Generic/mainfkt.c"
-
+//#include "Generic/diskio.c"
+#include "Generic/sdmm.c"
 // USB
 #define CPU_PRESCALE(n)	(CLKPR = 0x80, CLKPR = (n))
 
@@ -256,6 +257,11 @@ uint16_t get_key_press( uint16_t key_mask )
 
 */
 
+#pragma mark MMC Generic def
+FATFS FatFs;		/* FatFs work area needed for each volume */
+FIL Fil;			/* File object needed for each open file */
+
+
 
 #pragma mark 1-wire
 
@@ -417,9 +423,9 @@ void Master_Init(void)
    // ---------------------------------------------------
 	//LCD
    // ---------------------------------------------------
-	LCD_DDR |= (1<<LCD_RSDS_PIN);		// PIN als Ausgang fuer LCD
- 	LCD_DDR |= (1<<LCD_ENABLE_PIN);	//Pin als Ausgang fuer LCD
-	LCD_DDR |= (1<<LCD_CLOCK_PIN);	//Pin 6 von PORT D als Ausgang fuer LCD
+	LCD_DDR |= (1<<LCD_RSDS);		// PIN als Ausgang fuer LCD
+ 	LCD_DDR |= (1<<LCD_ENABLE);	//Pin als Ausgang fuer LCD
+	LCD_DDR |= (1<<LCD_CLOCK);	//Pin 6 von PORT D als Ausgang fuer LCD
    
    
 }
@@ -433,23 +439,23 @@ void SPI_PORT_Init(void) // SPI-Pins aktivieren
    /*
    //Master init
    // Set MOSI and SCK output, all others input
-   SPI_DDR &= ~(1<<SPI_MISO_PIN);
-   SPI_PORT &= ~(1<<SPI_MISO_PIN); // HI   
-   SPI_DDR |= (1<<SPI_MOSI_PIN);
-   SPI_DDR |= (1<<SPI_SCK_PIN);
-   SPI_PORT &= ~(1<<SPI_SCK_PIN); // LO
-   SPI_DDR |= (1<<SPI_SS_PIN);
-   SPI_PORT |= (1<<SPI_SS_PIN); // HI
+   SPI_DDR &= ~(1<<SPI_MISO);
+   SPI_PORT &= ~(1<<SPI_MISO); // HI   
+   SPI_DDR |= (1<<SPI_MOSI);
+   SPI_DDR |= (1<<SPI_SCK);
+   SPI_PORT &= ~(1<<SPI_SCK); // LO
+   SPI_DDR |= (1<<SPI_SS);
+   SPI_PORT |= (1<<SPI_SS); // HI
     */
    
    // Slave init
-   SPI_DDR |= (1<<SPI_MISO_PIN); // Output
-   //SPI_PORT &= ~(1<<SPI_MISO_PIN); // HI
-   SPI_DDR &= ~(1<<SPI_MOSI_PIN); // Input
-   SPI_DDR &= ~(1<<SPI_SCK_PIN); // Input
-   //SPI_PORT &= ~(1<<SPI_SCK_PIN); // LO
-   SPI_DDR &= ~(1<<SPI_SS_PIN); // Input
-   SPI_PORT |= (1<<SPI_SS_PIN); // HI
+   SPI_DDR |= (1<<SPI_MISO); // Output
+   //SPI_PORT &= ~(1<<SPI_MISO); // HI
+   SPI_DDR &= ~(1<<SPI_MOSI); // Input
+   SPI_DDR &= ~(1<<SPI_SCK); // Input
+   //SPI_PORT &= ~(1<<SPI_SCK); // LO
+   SPI_DDR &= ~(1<<SPI_SS); // Input
+   SPI_PORT |= (1<<SPI_SS); // HI
 
    
    
@@ -459,8 +465,8 @@ void SPI_PORT_Init(void) // SPI-Pins aktivieren
 void SPI_ADC_init(void) // SS-Pin fuer EE aktivieren
 {
    
-   SPI_DDR |= (1<<SPI_SS_PIN);
-   SPI_PORT |= (1<<SPI_SS_PIN); // HI
+   SPI_DDR |= (1<<SPI_SS);
+   SPI_PORT |= (1<<SPI_SS); // HI
 }
 
 
@@ -470,29 +476,29 @@ void spi_start(void) // SPI-Pins aktivieren
    //http://www.atmel.com/dyn/resources/prod_documents/doc2467.pdf  page:165
    //Master init
    // Set MOSI and SCK output, all others input
-   SPI_DDR &= ~(1<<SPI_MISO_PIN);
-   SPI_PORT &= ~(1<<SPI_MISO_PIN); // LO
+   SPI_DDR &= ~(1<<SPI_MISO);
+   SPI_PORT &= ~(1<<SPI_MISO); // LO
    
-   SPI_DDR |= (1<<SPI_MOSI_PIN);
-   SPI_PORT &= ~(1<<SPI_MOSI_PIN); // LO
+   SPI_DDR |= (1<<SPI_MOSI);
+   SPI_PORT &= ~(1<<SPI_MOSI); // LO
    
-   SPI_DDR |= (1<<SPI_SCK_PIN);
-   SPI_PORT &= ~(1<<SPI_SCK_PIN); // LO
+   SPI_DDR |= (1<<SPI_SCK);
+   SPI_PORT &= ~(1<<SPI_SCK); // LO
    
-   SPI_DDR |= (1<<SPI_SS_PIN);
-   SPI_PORT |= (1<<SPI_SS_PIN); // HI
+   SPI_DDR |= (1<<SPI_SS);
+   SPI_PORT |= (1<<SPI_SS); // HI
   }
 
 void spi_end(void) // SPI-Pins deaktivieren
 {
    SPCR=0;
    
-   SPI_DDR &= ~(1<<SPI_MOSI_PIN); // MOSI off
-   SPI_DDR &= ~(1<<SPI_SCK_PIN); // SCK off
-   SPI_DDR &= ~(1<<SPI_SS_PIN); // SS off
+   SPI_DDR &= ~(1<<SPI_MOSI); // MOSI off
+   SPI_DDR &= ~(1<<SPI_SCK); // SCK off
+   SPI_DDR &= ~(1<<SPI_SS); // SS off
    
-   //SPI_RAM_DDR &= ~(1<<SPI_RAM_CS_PIN); // RAM-CS-PIN off
-   //SPI_EE_DDR &= ~(1<<SPI_EE_CS_PIN); // EE-CS-PIN off
+   //SPI_RAM_DDR &= ~(1<<SPI_RAM_CS); // RAM-CS-PIN off
+   //SPI_EE_DDR &= ~(1<<SPI_EE_CS); // EE-CS-PIN off
 }
 
 /*
@@ -525,7 +531,7 @@ void timer1_init(void)
     OSZI_A_HI ; // Test: data fuer SR
     _delay_us(5);
     //#define FRAME_TIME 20 // msec
-    KANAL_DDR |= (1<<KANAL_PIN); // Kanal Ausgang
+    KANAL_DDR |= (1<<KANAL); // Kanal Ausgang
     
     DDRD |= (1<<PORTD5); //  Ausgang
     PORTD |= (1<<PORTD5); //  Ausgang
@@ -720,7 +726,7 @@ ISR(INT0_vect) // Interrupt bei CS, falling edge
 ISR (PCINT0_vect)
 {
    
-   if(INTERRUPT_PIN & (1<< MASTER_EN_PIN))// LOW to HIGH pin change, Sub ON
+   if(INTERRUPT & (1<< MASTER_EN))// LOW to HIGH pin change, Sub ON
    {
       //OSZI_C_LO;
      
@@ -943,20 +949,21 @@ int main (void)
 #pragma mark DS1820 init
    
    // DS1820 init-stuff begin
-  // OW_OUT |= (1<<OW_PIN);
+  // OW_OUT |= (1<<OW);
    uint8_t i=0;
    uint8_t nSensors=0;
    uint8_t err = ow_reset();
-   lcd_gotoxy(18,0);
-   lcd_puthex(err);
+   //lcd_gotoxy(18,0);
+   //lcd_puthex(err);
    gNsensors = search_sensors();
    
    delay_ms(100);
-   lcd_gotoxy(0,0);
-   lcd_puts("Sn:\0");
-   lcd_puthex(gNsensors);
    if (gNsensors>0)
    {
+      lcd_gotoxy(0,0);
+      lcd_puts("Sn:\0");
+      lcd_puthex(gNsensors);
+
       lcd_clr_line(1);
       start_temp_meas();
    }
@@ -967,8 +974,8 @@ int main (void)
       i++;
    }
    delay_ms(100);
-   lcd_gotoxy(0,0);
-   lcd_puts("Sens:\0");
+   //lcd_gotoxy(0,0);
+   //lcd_puts("Sens:\0");
    lcd_puthex(gNsensors);
    if (gNsensors>0)
    {
@@ -983,9 +990,14 @@ int main (void)
    }
 
    // DS1820 init-stuff end
-
+#pragma mark MMC Generic
+   // MMC Generic start
+   UINT bw;
+   DSTATUS initerr = disk_initialize (0);
+   lcd_gotoxy(0,0);
+   lcd_puthex(initerr);
 	
-
+//MMC Generic end
    // ---------------------------------------------------
    // Vorgaben fuer Homescreen
    // ---------------------------------------------------
@@ -1068,7 +1080,7 @@ int main (void)
             //lcd_puthex(spi_rxbuffer[i]);
 //            sendbuffer[i+CODE_OFFSET] = spi_rxbuffer[i];
          }
-
+/*
          lcd_gotoxy(0,1);
          lcd_putc('S');
          //lcd_putc(' ');
@@ -1076,7 +1088,7 @@ int main (void)
           {
              lcd_puthex(sendbuffer[i]);
           }
-
+*/
          /*
          lcd_gotoxy(0,1);
          lcd_putc('R');
