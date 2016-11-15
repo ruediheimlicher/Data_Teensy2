@@ -161,6 +161,77 @@ void xmit_mmc (
 }
 
 
+// SPI
+
+/* Exchange a byte */
+static
+BYTE xchg_spi (		/* Returns received data */
+               BYTE dat		/* Data to be sent */
+)
+{
+   SPDR = dat;
+   loop_until_bit_is_set(SPSR, SPIF);
+   return SPDR;
+}
+
+/* Receive a data block fast */
+static
+void rcvr_spi_multi (
+                     BYTE *p,	/* Data read buffer */
+                     UINT cnt	/* Size of data block */
+)
+{
+   do {
+      SPDR = 0xFF;
+      loop_until_bit_is_set(SPSR, SPIF);
+      *p++ = SPDR;
+      SPDR = 0xFF;
+      loop_until_bit_is_set(SPSR, SPIF);
+      *p++ = SPDR;
+   } while (cnt -= 2);
+}
+
+
+/* Send a data block fast */
+static
+void xmit_spi_multi (
+                     const BYTE *p,	/* Data block to be sent */
+                     UINT cnt		/* Size of data block */
+)
+{
+   do {
+      SPDR = *p++;
+      loop_until_bit_is_set(SPSR, SPIF);
+      SPDR = *p++;
+      loop_until_bit_is_set(SPSR, SPIF);
+   } while (cnt -= 2);
+}
+
+
+static
+int xmit_datablock_spi (
+                    const BYTE *buff,	/* 512 byte data block to be transmitted */
+                    BYTE token			/* Data/Stop token */
+)
+{
+   BYTE resp;
+   
+   
+   if (!wait_ready_spi(500)) return 0;
+   
+   xchg_spi(token);					/* Xmit data token */
+   if (token != 0xFD) {	/* Is data token */
+      xmit_spi_multi(buff, 512);		/* Xmit the data block to the MMC */
+      xchg_spi(0xFF);					/* CRC (Dummy) */
+      xchg_spi(0xFF);
+      resp = xchg_spi(0xFF);			/* Reveive data response */
+      if ((resp & 0x1F) != 0x05)		/* If not accepted, return with error */
+         return 0;
+   }
+   
+   return 1;
+}
+
 
 /*-----------------------------------------------------------------------*/
 /* Receive bytes from the card (bitbanging)                              */
@@ -220,6 +291,21 @@ int wait_ready (void)	/* 1:OK, 0:Timeout */
 	return tmr ? 1 : 0;
 }
 
+static
+int wait_ready_SPI (void)	/* 1:OK, 0:Timeout */
+{
+   BYTE d;
+   UINT tmr;
+   
+   
+   for (tmr = 5000; tmr; tmr--) {	/* Wait for ready in timeout of 500ms */
+      rcvr_mmc(&d, 1);
+      if (d == 0xFF) break;
+      dly_us(100);
+   }
+   
+   return tmr ? 1 : 0;
+}
 
 
 /*-----------------------------------------------------------------------*/
@@ -319,54 +405,100 @@ int xmit_datablock (	/* 1:OK, 0:Failed */
 /* Send a command packet to the card                                     */
 /*-----------------------------------------------------------------------*/
 
-
+/*
 static
-BYTE send_cmd (		/* Returns command response (bit7==1:Send failed)*/
-	BYTE cmd,		/* Command byte */
-	DWORD arg		/* Argument */
+BYTE send_cmd (		// Returns command response (bit7==1:Send failed)*
+	BYTE cmd,		// Command byte *
+	DWORD arg		// Argument *
 )
 {
 	BYTE n, d, buf[6];
 
 
-	if (cmd & 0x80) {	/* ACMD<n> is the command sequense of CMD55-CMD<n> */
+	if (cmd & 0x80) {	// ACMD<n> is the command sequense of CMD55-CMD<n> *
 		cmd &= 0x7F;
 		n = send_cmd(CMD55, 0);
 		if (n > 1) return n;
 	}
 
-	/* Select the card and wait for ready except to stop multiple block read */
+	// Select the card and wait for ready except to stop multiple block read *
 	if (cmd != CMD12)
    {
 		deselect();
 		if (!select()) return 0xFF;
 	}
 
-	/* Send a command packet */
-	buf[0] = 0x40 | cmd;			/* Start + Command index */
-	buf[1] = (BYTE)(arg >> 24);		/* Argument[31..24] */
-	buf[2] = (BYTE)(arg >> 16);		/* Argument[23..16] */
-	buf[3] = (BYTE)(arg >> 8);		/* Argument[15..8] */
-	buf[4] = (BYTE)arg;				/* Argument[7..0] */
-	n = 0x01;						/* Dummy CRC + Stop */
-	if (cmd == CMD0) n = 0x95;		/* (valid CRC for CMD0(0)) */
-	if (cmd == CMD8) n = 0x87;		/* (valid CRC for CMD8(0x1AA)) */
+	// Send a command packet *
+	buf[0] = 0x40 | cmd;			// Start + Command index *
+	buf[1] = (BYTE)(arg >> 24);		// Argument[31..24] *
+	buf[2] = (BYTE)(arg >> 16);		// Argument[23..16] *
+	buf[3] = (BYTE)(arg >> 8);		// Argument[15..8] *
+	buf[4] = (BYTE)arg;				// Argument[7..0] *
+	n = 0x01;						// Dummy CRC + Stop *
+	if (cmd == CMD0) n = 0x95;		// (valid CRC for CMD0(0)) *
+	if (cmd == CMD8) n = 0x87;		// (valid CRC for CMD8(0x1AA)) *
 	buf[5] = n;
    
 	xmit_mmc(buf, 6);
    
    //xmit_datablock(buf, 6);
 
-	/* Receive command response */
-	if (cmd == CMD12) rcvr_mmc(&d, 1);	/* Skip a stuff byte when stop reading */
-	n = 10;								/* Wait for a valid response in timeout of 10 attempts */
+	// Receive command response /
+	if (cmd == CMD12) rcvr_mmc(&d, 1);	// Skip a stuff byte when stop reading /
+	n = 10;								// Wait for a valid response in timeout of 10 attempts
 	do
 		rcvr_mmc(&d, 1);
 	while ((d & 0x80) && --n);
 
-	return d;			/* Return with the response value */
+	return d;			// Return with the response value *
 }
+*/
 
+/*-----------------------------------------------------------------------*/
+/* Send a command packet to MMC                                          */
+/*-----------------------------------------------------------------------*/
+
+static
+BYTE send_cmd (		/* Returns R1 resp (bit7==1:Send failed) */
+               BYTE cmd,		/* Command index */
+               DWORD arg		/* Argument */
+)
+{
+   BYTE n, res;
+   
+   
+   if (cmd & 0x80) {	/* ACMD<n> is the command sequense of CMD55-CMD<n> */
+      cmd &= 0x7F;
+      res = send_cmd(CMD55, 0);
+      if (res > 1) return res;
+   }
+   
+   /* Select the card and wait for ready except to stop multiple block read */
+   if (cmd != CMD12) {
+      deselect();
+      if (!select()) return 0xFF;
+   }
+   
+   /* Send command packet */
+   xchg_spi(0x40 | cmd);				/* Start + Command index */
+   xchg_spi((BYTE)(arg >> 24));		/* Argument[31..24] */
+   xchg_spi((BYTE)(arg >> 16));		/* Argument[23..16] */
+   xchg_spi((BYTE)(arg >> 8));			/* Argument[15..8] */
+   xchg_spi((BYTE)arg);				/* Argument[7..0] */
+   n = 0x01;							/* Dummy CRC + Stop */
+   if (cmd == CMD0) n = 0x95;			/* Valid CRC for CMD0(0) + Stop */
+   if (cmd == CMD8) n = 0x87;			/* Valid CRC for CMD8(0x1AA) Stop */
+   xchg_spi(n);
+   
+   /* Receive command response */
+   if (cmd == CMD12) xchg_spi(0xFF);		/* Skip a stuff byte when stop reading */
+   n = 10;								/* Wait for a valid response in timeout of 10 attempts */
+   do
+      res = xchg_spi(0xFF);
+   while ((res & 0x80) && --n);
+   
+   return res;			/* Return with the response value */
+}
 
 
 /*--------------------------------------------------------------------------
