@@ -158,76 +158,7 @@ void xmit_mmc (
 		if (d & 0x01) DI_H(); else DI_L();	/* bit0 */
 		CK_H(); CK_L();
 	} while (--bc);
-
 }
-
-DRESULT mmc_disk_write (
-                        const BYTE *buff,	/* Pointer to the data to be written */
-                        DWORD sector,		/* Start sector number (LBA) */
-                        UINT count			/* Sector count (1..128) */
-)
-{
-   if (!count) return RES_PARERR;
-   if (Stat & STA_NOINIT) return RES_NOTRDY;
-   if (Stat & STA_PROTECT) return RES_WRPRT;
-   
-   if (!(CardType & CT_BLOCK)) sector *= 512;	/* Convert to byte address if needed */
-   
-   if (count == 1) {	/* Single block write */
-      if ((send_cmd(CMD24, sector) == 0)	/* WRITE_BLOCK */
-          && xmit_datablock(buff, 0xFE))
-         count = 0;
-   }
-   else {				/* Multiple block write */
-      if (CardType & CT_SDC) send_cmd(ACMD23, count);
-      if (send_cmd(CMD25, sector) == 0) {	/* WRITE_MULTIPLE_BLOCK */
-         do {
-            if (!xmit_datablock(buff, 0xFC)) break;
-            buff += 512;
-         } while (--count);
-         if (!xmit_datablock(0, 0xFD))	/* STOP_TRAN token */
-            count = 1;
-      }
-   }
-   deselect();
-   
-   return count ? RES_ERROR : RES_OK;
-}
-
-
-/* Send a data block fast */
-static
-void xmit_spi_multi (
-                     const BYTE *p,	/* Data block to be sent */
-                     UINT cnt		/* Size of data block */
-)
-{
-   do {
-      SPDR = *p++;
-      loop_until_bit_is_set(SPSR, SPIF);
-      SPDR = *p++;
-      loop_until_bit_is_set(SPSR, SPIF);
-   } while (cnt -= 2);
-}
-
-
-
-/*-----------------------------------------------------------------------*/
-/* Transmit/Receive data from/to MMC via SPI  (Platform dependent)       */
-/*-----------------------------------------------------------------------*/
-
-/* Exchange a byte */
-static
-BYTE xchg_spi (		/* Returns received data */
-               BYTE dat		/* Data to be sent */
-)
-{
-   SPDR = dat;
-   loop_until_bit_is_set(SPSR, SPIF);
-   return SPDR;
-}
-
-
 
 
 
@@ -295,7 +226,7 @@ int wait_ready (void)	/* 1:OK, 0:Timeout */
 /* Deselect the card and release SPI bus                                 */
 /*-----------------------------------------------------------------------*/
 
-static
+
 void deselect (void)
 {
 	BYTE d;
