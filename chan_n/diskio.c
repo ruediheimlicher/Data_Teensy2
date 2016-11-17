@@ -24,25 +24,25 @@ DSTATUS disk_status (
 )
 {
 	DSTATUS stat;
-	int result;
+	int result=1;
 
 	switch (pdrv) {
 	case DEV_RAM :
-		result = RAM_disk_status();
+		//result = RAM_disk_status();
 
 		// translate the reslut code here
 
 		return stat;
 
 	case DEV_MMC :
-		result = MMC_disk_status();
+		result = mmc_disk_status();
 
 		// translate the reslut code here
 
 		return stat;
 
 	case DEV_USB :
-		result = USB_disk_status();
+		//result = USB_disk_status();
 
 		// translate the reslut code here
 
@@ -62,11 +62,11 @@ DSTATUS disk_initialize (
 )
 {
 	DSTATUS stat;
-	int result;
+	int result=1;
 
 	switch (pdrv) {
 	case DEV_RAM :
-		result = RAM_disk_initialize();
+		//RAM_disk_initialize();
 
 		// translate the reslut code here
 
@@ -75,14 +75,14 @@ DSTATUS disk_initialize (
 	case DEV_MMC :
       {
          lcd_putc('m');
-		result = MMC_disk_initialize();
+		result = mmc_disk_initialize();
 
 		// translate the reslut code here
 
 		return stat;
       }
 	case DEV_USB :
-		result = USB_disk_initialize();
+		//result = USB_disk_initialize();
 
 		// translate the reslut code here
 
@@ -105,13 +105,13 @@ DRESULT disk_read (
 )
 {
 	DRESULT res;
-	int result;
+	int result=1;
 
 	switch (pdrv) {
 	case DEV_RAM :
 		// translate the arguments here
 
-		result = RAM_disk_read(buff, sector, count);
+		//result = RAM_disk_read(buff, sector, count);
 
 		// translate the reslut code here
 
@@ -120,7 +120,7 @@ DRESULT disk_read (
 	case DEV_MMC :
 		// translate the arguments here
 
-		result = MMC_disk_read(buff, sector, count);
+		result = mmc_disk_read(buff, sector, count);
 
 		// translate the reslut code here
 
@@ -129,7 +129,7 @@ DRESULT disk_read (
 	case DEV_USB :
 		// translate the arguments here
 
-		result = USB_disk_read(buff, sector, count);
+		//result = USB_disk_read(buff, sector, count);
 
 		// translate the reslut code here
 
@@ -153,13 +153,13 @@ DRESULT disk_write (
 )
 {
 	DRESULT res;
-	int result;
+	int result=1;
 
 	switch (pdrv) {
 	case DEV_RAM :
 		// translate the arguments here
 
-		result = RAM_disk_write(buff, sector, count);
+		//result = RAM_disk_write(buff, sector, count);
 
 		// translate the reslut code here
 
@@ -168,7 +168,7 @@ DRESULT disk_write (
 	case DEV_MMC :
 		// translate the arguments here
 
-		result = MMC_disk_write(buff, sector, count);
+		result = mmc_disk_write(buff, sector, count);
 
 		// translate the reslut code here
 
@@ -177,7 +177,7 @@ DRESULT disk_write (
 	case DEV_USB :
 		// translate the arguments here
 
-		result = USB_disk_write(buff, sector, count);
+		//result = USB_disk_write(buff, sector, count);
 
 		// translate the reslut code here
 
@@ -200,7 +200,7 @@ DRESULT disk_ioctl (
 )
 {
 	DRESULT res;
-	int result;
+	int result=1;
 
 	switch (pdrv) {
 	case DEV_RAM :

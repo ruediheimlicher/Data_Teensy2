@@ -5375,7 +5375,10 @@ FRESULT f_mkfs (
 			for (i = 0; nb >= 8 && i < szb_buf; buf[i++] = 0xFF, nb -= 8) ;
 			for (b = 1; nb && i < szb_buf; buf[i] |= b, b <<= 1, nb--) ;
 			n = (nsect > sz_buf) ? sz_buf : nsect;		/* Write the buffered data */
-			if (disk_write(pdrv, buf, sect, n) != RES_OK) return FR_DISK_ERR;
+			if (disk_write(pdrv, buf, sect, n) != RES_OK)
+         {
+            return FR_DISK_ERR;
+         }
 			sect += n; nsect -= n;
 		} while (nsect);
 

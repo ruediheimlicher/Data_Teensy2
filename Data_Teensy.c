@@ -36,6 +36,7 @@
 
 #include "chan_n/mmc_avr_spi.c"
 #include "chan_n/ff.c"
+#include "chan_n/diskio.c"
 
 
 
@@ -65,22 +66,22 @@ volatile uint16_t tscounter =0;
 extern volatile uint8_t isrcontrol;
 
 volatile uint8_t do_output=0;
-static volatile uint8_t testbuffer[USB_DATENBREITE]={};
+//static volatile uint8_t testbuffer[USB_DATENBREITE]={};
 
 
-static volatile uint8_t buffer[USB_DATENBREITE]={};
+//static volatile uint8_t buffer[USB_DATENBREITE]={};
 
 
 static volatile uint8_t recvbuffer[USB_DATENBREITE]={};
 
 static volatile uint8_t sendbuffer[USB_DATENBREITE]={};
 
-volatile uint8_t outbuffer[USB_DATENBREITE]={};
-volatile uint8_t inbuffer[USB_DATENBREITE]={};
+//volatile uint8_t outbuffer[USB_DATENBREITE]={};
+//volatile uint8_t inbuffer[USB_DATENBREITE]={};
 
-static volatile uint8_t kontrollbuffer[USB_DATENBREITE]={};
+//static volatile uint8_t kontrollbuffer[USB_DATENBREITE]={};
 
-static volatile uint8_t eeprombuffer[USB_DATENBREITE]={};
+//static volatile uint8_t eeprombuffer[USB_DATENBREITE]={};
 
 #define TIMER0_STARTWERT	0x40
 
@@ -88,10 +89,10 @@ static volatile uint8_t eeprombuffer[USB_DATENBREITE]={};
 
 volatile uint8_t timer0startwert=TIMER0_STARTWERT;
 
-volatile uint8_t rxbuffer[USB_DATENBREITE];
+//volatile uint8_t rxbuffer[USB_DATENBREITE];
 
 /*Der Sendebuffer, der vom Master ausgelesen werden kann.*/
-volatile uint8_t txbuffer[USB_DATENBREITE];
+//volatile uint8_t txbuffer[USB_DATENBREITE];
 
 
 void delay_ms(unsigned int ms);
@@ -135,20 +136,20 @@ static volatile uint8_t spi_rxdata=0;
 static volatile uint8_t inindex=0;
 
 volatile char SPI_data='0';
-volatile char SPI_dataArray[SPI_BUFSIZE];
-volatile uint16_t Pot_Array[SPI_BUFSIZE];
+//volatile char SPI_dataArray[SPI_BUFSIZE];
+//volatile uint16_t Pot_Array[SPI_BUFSIZE];
 
-volatile uint16_t Mitte_Array[8];
+//volatile uint16_t Mitte_Array[8];
 
 //volatile uint8_t Level_Array[8]; // Levels fuer Kanaele, 1 byte pro kanal
 //volatile uint8_t Expo_Array[8]; // Levels fuer Kanaele, 1 byte pro kanal
 
-volatile uint16_t Mix_Array[8];// Mixings, 2 8-bit-bytes pro Mixing
+//volatile uint16_t Mix_Array[8];// Mixings, 2 8-bit-bytes pro Mixing
 
 
-volatile uint16_t RAM_Array[SPI_BUFSIZE];
+//volatile uint16_t RAM_Array[SPI_BUFSIZE];
 
-volatile uint8_t testdataarray[8]={};
+//volatile uint8_t testdataarray[8]={};
 volatile uint16_t teststartadresse=0xA0;
 
 
@@ -196,7 +197,10 @@ WORD AccFiles, AccDirs;
 
 BYTE RtcOk;				/* RTC is available */
 volatile UINT Timer;	/* Performance timer (100Hz increment) */
-volatile uint8_t readbuffer[512] = {};
+volatile uint8_t mmcbuffer[SD_DATA_SIZE] = {};
+const uint8_t rambuffer[SD_DATA_SIZE] PROGMEM = {};
+const uint8_t databuffer[SD_DATA_SIZE] PROGMEM = {};
+//volatile uint8_t writebuffer[512] = {};
 
 //#define CLOCK_DIV 15 // timer0 1 Hz bei Teilung /4 in ISR 16 MHz
 #define CLOCK_DIV 8 // timer0 1 Hz bei Teilung /4 in ISR 8 MHz
@@ -1052,16 +1056,39 @@ int main (void)
  //  masterstatus |= (1<<SUB_READ_EEPROM_BIT); // sub soll EE lesen
 #pragma mark MMC init
    DSTATUS initerr = mmc_disk_initialize();
-   lcd_gotoxy(0,0);
+   //lcd_gotoxy(0,0);
    //lcd_putc('*');
-   lcd_puthex(initerr);
-   lcd_putc('*');
+   //lcd_puthex(initerr);
+   //lcd_putc('*');
    
-//   FRESULT mounterr = f_mount(&FatFs,"0:",1);
+   if (initerr)
+   {
+      lcd_gotoxy(0,0);
+      lcd_puts("CD err");
+      lcd_puthex(initerr);
+      lcd_putc('*');
+
+   }
+   else
+   {
+      lcd_gotoxy(0,0);
+      lcd_puts("CD OK ");
+      lcd_puthex(initerr);
+      lcd_putc('*');
+
+   }
    
+   FRESULT mounterr = f_mount(&FatFs,"0:",1);
    
-   DRESULT readerr = mmc_disk_read ((void*)readbuffer,0,	1);
+   DRESULT readerr=0;
+  
+   //mmcbuffer[0] = 'A';
+  // mmcbuffer[1] = 'B';
+  // mmcbuffer[2] = 'C';
+   //mmcbuffer[0] = 0;
    
+   readerr = mmc_disk_read ((void*)mmcbuffer,1,	1);
+   //readerr = mmc_disk_write ((void*)mmcbuffer,1,	1);
    
    lcd_gotoxy(0,1);
    
@@ -1074,15 +1101,18 @@ int main (void)
       uint16_t i=0;
       for (i=0;i<0x200;i++)
       {
-      if (readbuffer[i])
+      if (mmcbuffer[i])
       {
-       lcd_puthex(readbuffer[i]);
+       lcd_puthex(mmcbuffer[i]);
       }
       }
       lcd_putc('+');
    }
   lcd_putc('*');
-    
+   
+
+   
+   
 #pragma mark DS1820 init
    
    // DS1820 init-stuff begin
