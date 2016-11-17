@@ -116,6 +116,7 @@ BYTE xchg_spi (		/* Returns received data */
 	BYTE dat		/* Data // To be sent */
 )
 {
+   //lcd_putc('$');
 	SPDR = dat;
 	loop_until_bit_is_set(SPSR, SPIF);
 	return SPDR;
@@ -332,29 +333,42 @@ DSTATUS mmc_disk_initialize (void)
 {
 	BYTE n, cmd, ty, ocr[4];
 
-
-	power_off();						/* Turn off the socket power to reset the card */
+	power_off();
+   /* Turn off the socket power to reset the card */
 	for (Timer1 = 10; Timer1; ) ;		/* Wait for 100ms */
-	if (Stat & STA_NODISK) return Stat;	/* No card in the socket? */
-
+	
+   if (Stat & STA_NODISK) return Stat;	/* No card in the socket? */
 	power_on();							/* Turn on the socket power */
 	FCLK_SLOW;
+   //CS_LOW;
 	for (n = 10; n; n--) xchg_spi(0xFF);	/* 80 dummy clocks */
 
 	ty = 0;
-	if (send_cmd(CMD0, 0) == 1) {			/* Put the card SPI mode */
-		Timer1 = 100;						/* Initialization timeout of 1000 msec */
-		if (send_cmd(CMD8, 0x1AA) == 1) {	/* Is the card SDv2? */
+	if (send_cmd(CMD0, 0) == 1)
+   {			/* Put the card SPI mode */
+		lcd_putc('6');
+      Timer1 = 100;						/* Initialization timeout of 1000 msec */
+		lcd_putc('7');
+      if (send_cmd(CMD8, 0x1AA) == 1)
+      {	/* Is the card SDv2? */
+         //lcd_putc('7');
 			for (n = 0; n < 4; n++) ocr[n] = xchg_spi(0xFF);	/* Get trailing return value of R7 resp */
-			if (ocr[2] == 0x01 && ocr[3] == 0xAA) {				/* The card can work at vdd range of 2.7-3.6V */
+			if (ocr[2] == 0x01 && ocr[3] == 0xAA)
+         {				/* The card can work at vdd range of 2.7-3.6V */
 				while (Timer1 && send_cmd(ACMD41, 1UL << 30));	/* Wait for leaving idle state (ACMD41 with HCS bit) */
-				if (Timer1 && send_cmd(CMD58, 0) == 0) {		/* Check CCS bit in the OCR */
+				if (Timer1 && send_cmd(CMD58, 0) == 0)
+            {		/* Check CCS bit in the OCR */
 					for (n = 0; n < 4; n++) ocr[n] = xchg_spi(0xFF);
 					ty = (ocr[0] & 0x40) ? CT_SD2 | CT_BLOCK : CT_SD2;	/* Check if the card is SDv2 */
 				}
 			}
-		} else {							/* SDv1 or MMCv3 */
-			if (send_cmd(ACMD41, 0) <= 1) 	{
+		}
+      else
+      {
+         lcd_putc('8');
+         /* SDv1 or MMCv3 */
+			if (send_cmd(ACMD41, 0) <= 1)
+         {
 				ty = CT_SD1; cmd = ACMD41;	/* SDv1 */
 			} else {
 				ty = CT_MMC; cmd = CMD1;	/* MMCv3 */
@@ -367,7 +381,11 @@ DSTATUS mmc_disk_initialize (void)
 	CardType = ty;
 	deselect();
 
-	if (ty) {			/* Initialization succeded */
+	if (ty)
+   {			/* Initialization succeded */
+      lcd_gotoxy(5,0);
+      lcd_puts("i OK ");
+      lcd_puthex(CardType);
 		Stat &= ~STA_NOINIT;		/* Clear STA_NOINIT */
 //		FCLK_FAST;
 	} else {			/* Initialization failed */
@@ -635,7 +653,6 @@ DRESULT mmc_disk_ioctl (
 void mmc_disk_timerproc (void)
 {
 	BYTE n, s;
-
 
 	n = Timer1;				/* 100Hz decrement timer */
 	if (n) Timer1 = --n;
