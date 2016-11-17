@@ -197,7 +197,7 @@ WORD AccFiles, AccDirs;
 
 BYTE RtcOk;				/* RTC is available */
 volatile UINT Timer;	/* Performance timer (100Hz increment) */
-
+volatile uint8_t readbuffer[512] = {};
 
 //#define CLOCK_DIV 15 // timer0 1 Hz bei Teilung /4 in ISR 16 MHz
 #define CLOCK_DIV 8 // timer0 1 Hz bei Teilung /4 in ISR 8 MHz
@@ -928,6 +928,38 @@ uint8_t Tastenwahl(uint8_t Tastaturwert)
 #define setbit(port, bit) (port) |= (1 << (bit))
 #define clearbit(port, bit) (port) &= ~(1 << (bit))
 
+BYTE SD_ReadSector( unsigned long SectorNumber, BYTE *Buffer )
+{
+   BYTE c, i;
+   WORD count;
+   
+   /* send block-read command... */
+   send_cmd( CMD_READ_SINGLE_BLOCK, SectorNumber << 9 );
+   c = xchg_spi(0xFF);
+   i = xchg_spi(0xFF);
+   count = 0xFFFF;
+   
+   /* wait for data token... */
+   while( (i == 0xff) && --count)
+      i = xchg_spi(0xFF);
+   
+   /* handle time out... */
+   if(c || i != 0xFE)
+      return( 1 );
+   
+   /* read the sector... */
+   for( count=0; count<SD_DATA_SIZE; count++)
+      *Buffer++ = xchg_spi(0xFF);
+   
+   /* ignore the checksum... */
+   xchg_spi(0xFF);
+   xchg_spi(0xFF);
+   
+   /* release the CS line... */
+   //SPI_DisableCS();
+   
+   return( 0 );
+}
 
 
 // MARK:  - main
@@ -1019,13 +1051,44 @@ int main (void)
 
    
  //  masterstatus |= (1<<SUB_READ_EEPROM_BIT); // sub soll EE lesen
-#pragma mark mmc init
+#pragma mark MMC init
    DSTATUS initerr = mmc_disk_initialize();
    lcd_gotoxy(0,0);
-   lcd_putc('*');
+   //lcd_putc('*');
    lcd_puthex(initerr);
    lcd_putc('*');
    
+//   FRESULT mounterr = f_mount(&FatFs,"0:",1);
+   
+   /*
+   DRESULT readerr = mmc_disk_read (
+                                    (void*)readbuffer,			// Pointer to the data buffer to store read data /
+                          0,		// Start sector number (LBA) /
+                          1			// Sector count (1..128) /
+                                    );
+   
+   //readerr = SD_ReadSector(0,(void*)readbuffer);
+   
+   lcd_gotoxy(0,1);
+   
+   lcd_puthex(readerr);
+   
+   lcd_putc('*');
+   if (readerr==0)
+   {
+      lcd_putc('+');
+      uint16_t i=0;
+      for (i=0;i<0x200;i++)
+      {
+      if (readbuffer[i])
+      {
+       lcd_puthex(readbuffer[i]);
+      }
+      }
+      lcd_putc('+');
+   }
+  lcd_putc('*');
+    */
 #pragma mark DS1820 init
    
    // DS1820 init-stuff begin
@@ -1035,6 +1098,8 @@ int main (void)
    uint8_t err = ow_reset();
 //   lcd_gotoxy(18,0);
 //   lcd_puthex(err);
+   
+   /*
    gNsensors = search_sensors();
    
    delay_ms(100);
@@ -1055,7 +1120,7 @@ int main (void)
       gTempdata[i]=0;
       i++;
    }
- 
+ */
    // DS1820 init-stuff end
 
 	
@@ -1144,12 +1209,12 @@ int main (void)
 //            sendbuffer[i+CODE_OFFSET] = spi_rxbuffer[i];
          }
 
-         lcd_gotoxy(0,1);
-         lcd_putc('S');
+         //lcd_gotoxy(0,1);
+         //lcd_putc('S');
          //lcd_putc(' ');
           for (int i=0;i<4;i++)
           {
-             lcd_puthex(sendbuffer[i]);
+          //   lcd_puthex(sendbuffer[i]);
           }
 
          /*

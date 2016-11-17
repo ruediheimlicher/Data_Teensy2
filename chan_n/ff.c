@@ -4068,6 +4068,12 @@ FRESULT f_lseek (
 				fp->flag &= (BYTE)~FA_DIRTY;
 			}
 #endif
+         /*
+          DRESULT mmc_disk_read (
+          BYTE *buff,			// Pointer to the data buffer to store read data
+         DWORD sector,		// Start sector number (LBA) /
+         UINT count			// Sector count (1..128) /
+         */
 			if (disk_read(fs->drv, fp->buf, nsect, 1) != RES_OK) ABORT(fs, FR_DISK_ERR);	/* Fill sector cache */
 #endif
 			fp->sect = nsect;

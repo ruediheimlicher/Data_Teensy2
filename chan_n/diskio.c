@@ -73,12 +73,14 @@ DSTATUS disk_initialize (
 		return stat;
 
 	case DEV_MMC :
+      {
+         lcd_putc('m');
 		result = MMC_disk_initialize();
 
 		// translate the reslut code here
 
 		return stat;
-
+      }
 	case DEV_USB :
 		result = USB_disk_initialize();
 

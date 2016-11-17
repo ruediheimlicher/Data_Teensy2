@@ -383,8 +383,8 @@ DSTATUS mmc_disk_initialize (void)
 
 	if (ty)
    {			/* Initialization succeded */
-      lcd_gotoxy(5,0);
-      lcd_puts("i OK ");
+      lcd_gotoxy(3,0);
+      lcd_puts("i OK");
       lcd_puthex(CardType);
 		Stat &= ~STA_NOINIT;		/* Clear STA_NOINIT */
 //		FCLK_FAST;
