@@ -1059,14 +1059,9 @@ int main (void)
    
 //   FRESULT mounterr = f_mount(&FatFs,"0:",1);
    
-   /*
-   DRESULT readerr = mmc_disk_read (
-                                    (void*)readbuffer,			// Pointer to the data buffer to store read data /
-                          0,		// Start sector number (LBA) /
-                          1			// Sector count (1..128) /
-                                    );
    
-   //readerr = SD_ReadSector(0,(void*)readbuffer);
+   DRESULT readerr = mmc_disk_read ((void*)readbuffer,0,	1);
+   
    
    lcd_gotoxy(0,1);
    
@@ -1087,7 +1082,7 @@ int main (void)
       lcd_putc('+');
    }
   lcd_putc('*');
-    */
+    
 #pragma mark DS1820 init
    
    // DS1820 init-stuff begin
