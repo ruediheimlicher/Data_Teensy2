@@ -23,7 +23,7 @@
 #define	FCLK_SLOW      SPI_PORT &= ~(1<<SPI_CLK)     /* Set SPI slow clock (100-400kHz) */
 #define	FCLK_FAST		SPI_PORT |= (1<<SPI_SS)       /* Set SPI fast clock (20MHz max) */
 
-
+#define _USE_WRITE 1
 /*--------------------------------------------------------------------------
 
    Module Private Functions
@@ -417,6 +417,7 @@ DRESULT mmc_disk_read (
 	DWORD sector,		/* Start sector number (LBA) */
 	UINT count			/* Sector count (1..128) */
 )
+
 {
 	BYTE cmd;
 
@@ -445,7 +446,7 @@ DRESULT mmc_disk_read (
 /* Write Sector(s)                                                       */
 /*-----------------------------------------------------------------------*/
 
-#if _USE_WRITE
+//#if _USE_WRITE
 DRESULT mmc_disk_write (
 	const BYTE *buff,	/* Pointer to the data to be written */
 	DWORD sector,		/* Start sector number (LBA) */
@@ -478,7 +479,7 @@ DRESULT mmc_disk_write (
 
 	return count ? RES_ERROR : RES_OK;
 }
-#endif
+//#endif
 
 
 /*-----------------------------------------------------------------------*/
