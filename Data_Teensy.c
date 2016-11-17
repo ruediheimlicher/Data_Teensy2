@@ -993,7 +993,7 @@ int main (void)
 #pragma mark MMC Generic
    // MMC Generic start
    UINT bw;
-   DSTATUS initerr = disk_initialize (0);
+   DSTATUS initerr = disk_initialize(0);
    lcd_gotoxy(0,0);
    lcd_puthex(initerr);
 	
