@@ -25,7 +25,7 @@
 /* Hardware connection, edit as needed     */
 /*******************************************/
 // the bus is on PB4:
-#define OW_GET_IN()    (OW_IN&(1<<OW_PIN))
+#define OW_GET_IN    (OW_IN&(1<<OW_PIN))
 // output and low:
 #define OW_DIR_OUT_LOW()   OW_OUT&=~(1<<OW_PIN);OW_DDR|=1<<OW_PIN
 // output and high:
@@ -57,7 +57,7 @@ void ow_delay_us(uint8_t us)
 
 inline uint8_t ow_input_pin_state()
 {
-        if (OW_GET_IN())
+        if (OW_GET_IN)
         {
                 return(1);
         }

@@ -27,14 +27,17 @@
 #include "defines.h"
 
 //#include "spi.c"
-#include "spi_adc.c"
+//#include "spi_adc.c"
 
 //#include "spi_slave.c"
-#include "soft_SPI.c"
+//#include "soft_SPI.c"
 
 #include "ds18x20.c"
 
-#include "Generic/mainfkt.c"
+//#include "Generic/mainfkt.c"
+#include "chan_n/mmc_avr_spi.c"
+
+
 
 // USB
 #define CPU_PRESCALE(n)	(CLKPR = 0x80, CLKPR = (n))
@@ -181,7 +184,8 @@ volatile    uint8_t task_indata=0;  // Taskdata von RC_PPM
 volatile    uint8_t task_out=0;     // Task an RC_PPM
 volatile    uint8_t task_outdata=0; // Taskdata an RC_PPM
 
-// Mark Screen
+#pragma mark mmc def
+
 
 //#define CLOCK_DIV 15 // timer0 1 Hz bei Teilung /4 in ISR 16 MHz
 #define CLOCK_DIV 8 // timer0 1 Hz bei Teilung /4 in ISR 8 MHz
@@ -433,23 +437,23 @@ void SPI_PORT_Init(void) // SPI-Pins aktivieren
    /*
    //Master init
    // Set MOSI and SCK output, all others input
-   SPI_DDR &= ~(1<<SPI_MISO_PIN);
-   SPI_PORT &= ~(1<<SPI_MISO_PIN); // HI   
-   SPI_DDR |= (1<<SPI_MOSI_PIN);
-   SPI_DDR |= (1<<SPI_SCK_PIN);
-   SPI_PORT &= ~(1<<SPI_SCK_PIN); // LO
-   SPI_DDR |= (1<<SPI_SS_PIN);
-   SPI_PORT |= (1<<SPI_SS_PIN); // HI
+   SPI_DDR &= ~(1<<SPI_MISO;
+   SPI_PORT &= ~(1<<SPI_MISO; // HI   
+   SPI_DDR |= (1<<SPI_MOSI;
+   SPI_DDR |= (1<<SPI_SCK;
+   SPI_PORT &= ~(1<<SPI_SCK; // LO
+   SPI_DDR |= (1<<SPI_SS;
+   SPI_PORT |= (1<<SPI_SS; // HI
     */
    
    // Slave init
-   SPI_DDR |= (1<<SPI_MISO_PIN); // Output
-   //SPI_PORT &= ~(1<<SPI_MISO_PIN); // HI
-   SPI_DDR &= ~(1<<SPI_MOSI_PIN); // Input
-   SPI_DDR &= ~(1<<SPI_SCK_PIN); // Input
-   //SPI_PORT &= ~(1<<SPI_SCK_PIN); // LO
-   SPI_DDR &= ~(1<<SPI_SS_PIN); // Input
-   SPI_PORT |= (1<<SPI_SS_PIN); // HI
+   SPI_DDR |= (1<<SPI_MISO); // Output
+   //SPI_PORT &= ~(1<<SPI_MISO; // HI
+   SPI_DDR &= ~(1<<SPI_MOSI); // Input
+   SPI_DDR &= ~(1<<SPI_CLK); // Input
+   //SPI_PORT &= ~(1<<SPI_SCK; // LO
+   SPI_DDR &= ~(1<<SPI_SS); // Input
+   SPI_PORT |= (1<<SPI_SS); // HI
 
    
    
@@ -459,8 +463,8 @@ void SPI_PORT_Init(void) // SPI-Pins aktivieren
 void SPI_ADC_init(void) // SS-Pin fuer EE aktivieren
 {
    
-   SPI_DDR |= (1<<SPI_SS_PIN);
-   SPI_PORT |= (1<<SPI_SS_PIN); // HI
+   SPI_DDR |= (1<<SPI_SS);
+   SPI_PORT |= (1<<SPI_SS); // HI
 }
 
 
@@ -470,29 +474,29 @@ void spi_start(void) // SPI-Pins aktivieren
    //http://www.atmel.com/dyn/resources/prod_documents/doc2467.pdf  page:165
    //Master init
    // Set MOSI and SCK output, all others input
-   SPI_DDR &= ~(1<<SPI_MISO_PIN);
-   SPI_PORT &= ~(1<<SPI_MISO_PIN); // LO
+   SPI_DDR &= ~(1<<SPI_MISO);
+   SPI_PORT &= ~(1<<SPI_MISO); // LO
    
-   SPI_DDR |= (1<<SPI_MOSI_PIN);
-   SPI_PORT &= ~(1<<SPI_MOSI_PIN); // LO
+   SPI_DDR |= (1<<SPI_MOSI);
+   SPI_PORT &= ~(1<<SPI_MOSI); // LO
    
-   SPI_DDR |= (1<<SPI_SCK_PIN);
-   SPI_PORT &= ~(1<<SPI_SCK_PIN); // LO
+   SPI_DDR |= (1<<SPI_CLK);
+   SPI_PORT &= ~(1<<SPI_CLK); // LO
    
-   SPI_DDR |= (1<<SPI_SS_PIN);
-   SPI_PORT |= (1<<SPI_SS_PIN); // HI
+   SPI_DDR |= (1<<SPI_SS);
+   SPI_PORT |= (1<<SPI_SS); // HI
   }
 
 void spi_end(void) // SPI-Pins deaktivieren
 {
    SPCR=0;
    
-   SPI_DDR &= ~(1<<SPI_MOSI_PIN); // MOSI off
-   SPI_DDR &= ~(1<<SPI_SCK_PIN); // SCK off
-   SPI_DDR &= ~(1<<SPI_SS_PIN); // SS off
+   SPI_DDR &= ~(1<<SPI_MOSI); // MOSI off
+   SPI_DDR &= ~(1<<SPI_CLK); // SCK off
+   SPI_DDR &= ~(1<<SPI_SS); // SS off
    
-   //SPI_RAM_DDR &= ~(1<<SPI_RAM_CS_PIN); // RAM-CS-PIN off
-   //SPI_EE_DDR &= ~(1<<SPI_EE_CS_PIN); // EE-CS-PIN off
+   //SPI_RAM_DDR &= ~(1<<SPI_RAM_CS; // RAM-CS-PIN off
+   //SPI_EE_DDR &= ~(1<<SPI_EE_CS; // EE-CS-PIN off
 }
 
 /*
@@ -525,7 +529,7 @@ void timer1_init(void)
     OSZI_A_HI ; // Test: data fuer SR
     _delay_us(5);
     //#define FRAME_TIME 20 // msec
-    KANAL_DDR |= (1<<KANAL_PIN); // Kanal Ausgang
+    KANAL_DDR |= (1<<KANAL; // Kanal Ausgang
     
     DDRD |= (1<<PORTD5); //  Ausgang
     PORTD |= (1<<PORTD5); //  Ausgang
@@ -720,7 +724,7 @@ ISR(INT0_vect) // Interrupt bei CS, falling edge
 ISR (PCINT0_vect)
 {
    
-   if(INTERRUPT_PIN & (1<< MASTER_EN_PIN))// LOW to HIGH pin change, Sub ON
+   if(INTERRUPT_PIN & (1<< MASTER_EN)// LOW to HIGH pin change, Sub ON
    {
       //OSZI_C_LO;
      
@@ -943,45 +947,33 @@ int main (void)
 #pragma mark DS1820 init
    
    // DS1820 init-stuff begin
-  // OW_OUT |= (1<<OW_PIN);
+  // OW_OUT |= (1<<OW;
    uint8_t i=0;
    uint8_t nSensors=0;
    uint8_t err = ow_reset();
-   lcd_gotoxy(18,0);
-   lcd_puthex(err);
+//   lcd_gotoxy(18,0);
+//   lcd_puthex(err);
    gNsensors = search_sensors();
    
    delay_ms(100);
-   lcd_gotoxy(0,0);
-   lcd_puts("Sn:\0");
-   lcd_puthex(gNsensors);
    if (gNsensors>0)
    {
-      lcd_clr_line(1);
-      start_temp_meas();
-   }
-   i=0;
-   while(i<MAXSENSORS)
-   {
-      gTempdata[i]=0;
-      i++;
-   }
-   delay_ms(100);
-   lcd_gotoxy(0,0);
-   lcd_puts("Sens:\0");
-   lcd_puthex(gNsensors);
-   if (gNsensors>0)
-   {
-      lcd_clr_line(1);
-      start_temp_meas();
-   }
-   i=0;
-   while(i<MAXSENSORS)
-   {
-      gTempdata[i]=0;
-      i++;
-   }
+      lcd_gotoxy(0,0);
+      lcd_puts("Sn:\0");
+      lcd_puthex(gNsensors);
 
+      lcd_clr_line(1);
+      start_temp_meas();
+   
+   
+   }
+   i=0;
+   while(i<MAXSENSORS)
+   {
+      gTempdata[i]=0;
+      i++;
+   }
+ 
    // DS1820 init-stuff end
 
 	

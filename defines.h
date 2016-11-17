@@ -35,7 +35,7 @@
 #define SPI_DDR            DDRB
 #define SPI_MISO           PB3
 #define SPI_MOSI           PB2
-#define SPI_SCLK           PB1
+#define SPI_CLK           PB1
 #define SPI_SS             PB0
 #endif
 

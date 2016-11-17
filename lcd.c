@@ -131,7 +131,7 @@ void
 lcd_load_byte(uint8_t out_byte)
 {
         /* make sure clock is low */
-        LCD_PORT &= ~_BV(LCD_CLOCK_PIN);
+        LCD_PORT &= ~(1<<LCD_CLOCK_PIN);
         
         int i;
         for(i=0; i<8; i++)
