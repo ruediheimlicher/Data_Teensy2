@@ -62,7 +62,7 @@ DSTATUS disk_initialize (BYTE pdrv)			/* Physical drive number to identify the d
 {
 	DSTATUS stat;
 	int result;
-
+   lcd_putc('a');
 	switch (pdrv) {
 	case DEV_RAM :
 		result = RAM_disk_initialize();

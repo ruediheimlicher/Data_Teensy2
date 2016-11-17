@@ -34,9 +34,17 @@
 
 #include "ds18x20.c"
 
-#include "Generic/mainfkt.c"
+// MARK: MMC include
+//#include "Generic/mainfkt.c"
 //#include "Generic/diskio.c"
-#include "Generic/sdmm.c"
+//#include "Generic/sdmm.c"
+
+#include "ff.h"
+#include "ff.c"
+#include "diskio.h"
+#include "diskio.c"
+#include "ffconf.h"
+
 // USB
 #define CPU_PRESCALE(n)	(CLKPR = 0x80, CLKPR = (n))
 
@@ -258,7 +266,8 @@ uint16_t get_key_press( uint16_t key_mask )
 */
 
 #pragma mark MMC Generic def
-FATFS FatFs;		/* FatFs work area needed for each volume */
+extern DSTATUS disk_initialize(BYTE pdrv);
+//FATFS FatFs;		/* FatFs work area needed for each volume */
 FIL Fil;			/* File object needed for each open file */
 
 
@@ -270,6 +279,7 @@ static uint8_t gSensorIDs[MAXSENSORS][OW_ROMCODE_SIZE];
 static int16_t gTempdata[MAXSENSORS]; // temperature times 10
 static uint8_t gTemp_measurementstatus=0; // 0=ok,1=error
 static int8_t gNsensors=0;
+
 
 uint8_t search_sensors(void)
 {
@@ -993,8 +1003,9 @@ int main (void)
 #pragma mark MMC Generic
    // MMC Generic start
    UINT bw;
-   DSTATUS initerr = disk_initialize(0);
+   DSTATUS initerr = disk_initialize(1);
    lcd_gotoxy(0,0);
+   lcd_putc('i');
    lcd_puthex(initerr);
 	
 //MMC Generic end
