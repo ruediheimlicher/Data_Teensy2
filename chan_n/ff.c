@@ -3211,7 +3211,8 @@ FRESULT f_mount (
 	if (vol < 0) return FR_INVALID_DRIVE;
 	cfs = FatFs[vol];					/* Pointer to fs object */
 
-	if (cfs) {
+	if (cfs)
+   {
 #if _FS_LOCK != 0
 		clear_lock(cfs);
 #endif
@@ -3221,7 +3222,8 @@ FRESULT f_mount (
 		cfs->fs_type = 0;				/* Clear old fs object */
 	}
 
-	if (fs) {
+	if (fs)
+   {
 		fs->fs_type = 0;				/* Clear new fs object */
 #if _FS_REENTRANT						/* Create sync object for the new volume */
 		if (!ff_cre_syncobj((BYTE)vol, &fs->sobj)) return FR_INT_ERR;

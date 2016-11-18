@@ -701,8 +701,9 @@ volatile uint16_t timer2BatterieCounter=0;
 ISR(TIMER0_COMPA_vect)
 {
    //lcd_putc('+');
-   Timer1--;			/* Performance counter for this module */
+//   Timer1--;			/* Performance counter for this module */
    mmc_disk_timerproc();	/* Drive timer procedure of low level disk I/O module */
+
 }
 
 
@@ -744,17 +745,6 @@ void timer1(void)
    //OCR1A = Servoposition[2];
    //OCR1B = 0x0FFF;
    ICR1 = 0x6400;          // 0x6400: Pulsabstand 50 ms
-
-   /*
-   // TCCR1A |= (1<<COM1A0);
-   TCCR1A |= (1<<COM1A1); // clear on compare match
-   TCCR1A |= (1<<WGM11);
-   
-   TCCR1B |= (1<<WGM12);
-   TCCR1B |= (1<<WGM13);
-   
-   TCCR1B |= (1<<CS11);
-  */
    // http://www.ledstyles.de/index.php/Thread/18214-ATmega32U4-Schaltungen-PWM/
    DDRB |= (1<<DDB6)|(1<<DDB5);
 
@@ -1078,8 +1068,12 @@ int main (void)
 
    }
    
-   FRESULT mounterr = f_mount(&FatFs,"0:",1);
-   
+   /*
+   FRESULT mounterr = f_mount((void*)FatFs,"",1);
+   lcd_gotoxy(16,0);
+   lcd_puthex(mounterr);
+    */
+
    DRESULT readerr=0;
   
    //mmcbuffer[0] = 'A';
@@ -1093,6 +1087,7 @@ int main (void)
    lcd_gotoxy(0,1);
    
    lcd_puthex(readerr);
+   
    
    lcd_putc('*');
    if (readerr==0)
