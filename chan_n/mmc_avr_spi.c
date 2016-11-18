@@ -20,8 +20,8 @@
 #define	CS_HIGH        SPI_PORT |= (1<<SPI_SS)       /* Set MMC_CS = high */
 #define MMC_CD          1                             /* Test if card detected.   yes:true, no:false, default:true */
 #define MMC_WP          0                             /* Test if write protected. yes:true, no:false, default:false */
-#define	FCLK_SLOW      SPI_PORT &= ~(1<<SPI_CLK)     /* Set SPI slow clock (100-400kHz) */
-#define	FCLK_FAST		SPI_PORT |= (1<<SPI_SS)       /* Set SPI fast clock (20MHz max) */
+#define	FCLK_SLOW      SPCR |= (1<<SPR0);            /* Set SPI slow clock (100-400kHz) */
+#define	FCLK_FAST		SPCR &= ~(1<<SPR0);  SPCR &= ~(1<<SPR1);         /* Set SPI fast clock (20MHz max) */
 
 #define _USE_WRITE 1
 /*--------------------------------------------------------------------------
@@ -387,7 +387,7 @@ DSTATUS mmc_disk_initialize (void)
       lcd_puts("i OK");
       lcd_puthex(CardType);
 		Stat &= ~STA_NOINIT;		/* Clear STA_NOINIT */
-//		FCLK_FAST;
+		FCLK_FAST;
 	} else {			/* Initialization failed */
 		power_off();
 	}
