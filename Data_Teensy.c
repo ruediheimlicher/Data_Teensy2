@@ -968,7 +968,7 @@ BYTE SD_ReadSector( unsigned long SectorNumber, BYTE *Buffer )
 
 uint16_t writerand(uint16_t wert)
 {
-   uint16_t s1 = 100*(sin(M_PI * 2.0 * wert / 360.0)+1);
+   uint16_t s1 = 100*(sin(M_PI * 2.0 * wert / 360.0)+0.5);
    s1 += 50*(sin((M_PI * 2.0 * wert / 240.0)*7));
    s1 += 50*(sin((M_PI * 2.0 * wert / 120.0)*3));
    
@@ -1139,7 +1139,7 @@ int main (void)
 //   lcd_gotoxy(18,0);
 //   lcd_puthex(err);
    
-   /*
+   
    gNsensors = search_sensors();
    
    delay_ms(100);
@@ -1160,7 +1160,7 @@ int main (void)
       gTempdata[i]=0;
       i++;
    }
- */
+ 
    // DS1820 init-stuff end
 
 	
@@ -1207,31 +1207,39 @@ int main (void)
 // MARK:  spi_rxdata
       
       /* **** end spi_buffer abfragen **************** */
+      
 // MARK:  MMC write
-      if (mmcstatus & (1<<WRITENEXT))
+      if ((mmcstatus & (1<<WRITENEXT)) )
       {
+         if (usbstatus & (1<<WRITEAUTO))
+         {
+            uint16_t tempdata = writerand(mmcwritecounter);
+         //   OSZIA_LO;
+            sendbuffer[16] = (tempdata & 0x00FF);
+            sendbuffer[17] = ((tempdata & 0xFF00)>>8);
+            mmcbuffer[mmcwritecounter] = (tempdata & 0x00FF);
+            mmcbuffer[mmcwritecounter+1] = ((tempdata & 0xFF00)>>8);
+            lcd_gotoxy(0,3);
+            lcd_putint12(mmcwritecounter & 0x1FF);
+            lcd_putc(' ');
+            lcd_putint12(tempdata);
+/*
+            lcd_putc('l');
+            lcd_puthex((tempdata & 0x00FF));
+            lcd_putc('h');
+            lcd_puthex(((tempdata & 0xFF00)>>8));
+            lcd_putc(' ');
+*/
+            
+         }
          
-         uint16_t tempdata = writerand(mmcwritecounter);
-         OSZIA_LO;
-         sendbuffer[16] = (tempdata & 0x00FF);
-         sendbuffer[17] = ((tempdata & 0xFF00)>>8);
-         mmcbuffer[mmcwritecounter] = (tempdata & 0x00FF);
-         mmcbuffer[mmcwritecounter+1] = ((tempdata & 0xFF00)>>8);
          
-         writeerr = mmc_disk_write ((void*)mmcbuffer,1+ (mmcwritecounter & 0x800),1);
-         OSZIA_HI;
-         lcd_gotoxy(0,3);
-         lcd_putint12(mmcwritecounter & 0x1FF);
-         lcd_putc(' ');
-         lcd_putc('l');
-         lcd_puthex((tempdata & 0x00FF));
-         lcd_putc('h');
-         lcd_puthex(((tempdata & 0xFF00)>>8));
-         lcd_putc(' ');
+//         writeerr = mmc_disk_write ((void*)mmcbuffer,1+ (mmcwritecounter & 0x800),1);
+        // OSZIA_HI;
 
-        
-         lcd_puthex(writeerr);
-         lcd_putc('*');
+//         lcd_gotoxy(18,3);
+//         lcd_puthex(writeerr);
+         //lcd_putc('*');
          
          mmcstatus &= ~(1<<WRITENEXT);
          mmcwritecounter++;
@@ -1266,10 +1274,9 @@ int main (void)
          //lcd_gotoxy(18,0);
          //lcd_puthex(loopcount1);
          
-         sendbuffer[0] = ((usb_readcount));
-         sendbuffer[1] = (loopcount1 & 0xFF);
-         sendbuffer[2] = 16;
-         sendbuffer[3] = 75;
+         sendbuffer[1] = ((usb_readcount));
+         sendbuffer[2] = (loopcount1 & 0xFF);
+         sendbuffer[3] = 16;
         // sendbuffer[5] = spi_rxbuffer[0];
          
          for (int i=0;i<SPI_BUFSIZE;i++)
@@ -1377,48 +1384,48 @@ int main (void)
          //lcd_puthex(usberfolg);
          
          
-         if(loopcount1%16 == 0)
+         if(loopcount1%64 == 0)
          {
-        
-
+            
+            
 #pragma mark Sensors
-         // Temperatur messen mit DS18S20
-         
-         if (gNsensors) // Sensor eingesteckt
-         {
-            start_temp_meas();
-            delay_ms(800);
-            read_temp_meas();
-            uint8_t line=1;
-            //Sensor 1
-            lcd_gotoxy(10,line);
-            lcd_puts("T:     \0");
-            if (gTempdata[0]/10>=100)
+            // Temperatur messen mit DS18S20
+            
+            if (gNsensors) // Sensor eingesteckt
             {
-               lcd_gotoxy(13,line);
-               lcd_putint((gTempdata[0]/10));
-            }
-            else
-            {
-               lcd_gotoxy(12,line);
-               lcd_putint2((gTempdata[0]/10));
+               start_temp_meas();
+               delay_ms(800);
+               read_temp_meas();
+               uint8_t line=1;
+               //Sensor 1
+               lcd_gotoxy(10,line);
+               lcd_puts("T:     \0");
+               if (gTempdata[0]/10>=100)
+               {
+                  lcd_gotoxy(13,line);
+                  lcd_putint((gTempdata[0]/10));
+               }
+               else
+               {
+                  lcd_gotoxy(12,line);
+                  lcd_putint2((gTempdata[0]/10));
+               }
+               
+               lcd_putc('.');
+               lcd_putint1(gTempdata[0]%10);
             }
             
-            lcd_putc('.');
-            lcd_putint1(gTempdata[0]%10);
-         }
-          
             sendbuffer[DSLO]=((gTempdata[0])& 0x00FF);// T kommt mit Faktor 10 vom DS. Auf TWI ist T verdoppelt
             sendbuffer[DSHI]=((gTempdata[0]& 0xFF00)>>8);// T kommt mit Faktor 10 vom DS. Auf TWI ist T verdoppelt
             //lcd_gotoxy(10,0);
             //lcd_putint(sendbuffer[DSLO]);
             //lcd_putint(sendbuffer[DSHI]);
             // Halbgrad addieren
-         if (gTempdata[0]%10 >=5) // Dezimalstelle ist >=05: Wert  aufrunden, 1 addieren
-         {
-           // txbuffer[INNEN] +=1;
-         }
-       } //
+            if (gTempdata[0]%10 >=5) // Dezimalstelle ist >=05: Wert  aufrunden, 1 addieren
+            {
+               // txbuffer[INNEN] +=1;
+            }
+         } //
          
 			
 
@@ -1462,26 +1469,32 @@ int main (void)
          //OSZI_D_LO;
          cli();
          usb_readcount++;
-         uint8_t code = 0x00;
+         uint8_t code = recvbuffer[0];
+         lcd_gotoxy(18,0);
+         lcd_puthex(code);
+         usbstatus = code;
          
          
-         lcd_gotoxy(0,0);
          //lcd_putc('*');
          //lcd_puthex(r);
          //lcd_putc('*');
          //lcd_putint2(usb_readcount);
-         lcd_putc('R');
+         lcd_gotoxy(12,2);
+         lcd_putc('P');
          
          lcd_puthex(recvbuffer[8]);
          lcd_puthex(recvbuffer[9]);
          
-         lcd_gotoxy(10,0);
+         
 
          //lcd_puthex(recvbuffer[10]);
          //lcd_puthex(recvbuffer[11]);
          //lcd_putint12(recvbuffer[10] | (recvbuffer[11]<<8));
+         
+         // PWM fuer Channel A
+         
          OCR1A = (recvbuffer[10] | (recvbuffer[11]<<8));
-         lcd_putc('*');
+        // lcd_putc('*');
          
 
       //   for (i=0;i<SPI_BUFFERSIZE;i++)
@@ -1518,26 +1531,6 @@ int main (void)
          lcd_gotoxy(17,0);
          lcd_puthex(spi_txbuffer[0]);
         */
-         if (recvbuffer[15] & (1<<7)) // SPI-CONTROL setzen. MASTER soll SPI abfragen
-         {
-            spi_txbuffer[0] |= (1<<7);
- //           SPI_PORT &= ~(1<<SPI); // PIN setzen, um Master die Praesenz zu melden. Aktiv LO
-            spistatus |= (1<< SPI_RUN_BIT); // MASTER soll SPI abfragen
-            usbstatus |= (1<<USB_NEW);
-            spi_count=0;
-            lcd_gotoxy(19,0);
-            lcd_putc('+');
-
-         }
-         else
-         {
-            spi_txbuffer[0] &= ~(1<<7);
- //           SPI_PORT |= (1<<SPI); // HI ist : Teensy deaktiviert
-            spistatus &= ~(1<< SPI_RUN_BIT);
-            lcd_gotoxy(19,0);
-            lcd_putc('-');
-
-         }
          
          spi_txbuffer[1] = recvbuffer[1];
          spi_txbuffer[2] = recvbuffer[2];
@@ -1573,82 +1566,30 @@ int main (void)
          
          
 
-         usbstatus |= (1<<USB_RECV);
          {
-            code = 0;//buffer[0];
-            /*
+            //code = 0;//buffer[0];
+            
             switch (code)
             {
-               case 0xC0: // Write EEPROM Page start
+               case 0x01: // write to sd
                {
-                  
-                  usb_readcount=0;
-                  abschnittnummer++;
-                  eepromstartadresse = buffer[1] | (buffer[2]<<8);
-                  anzahlpakete = buffer[3];
-                  //eepromstatus |= (1<<EE_WRITE);
-                  lcd_gotoxy(8,0);
-                  lcd_putc('E');
-                  lcd_puthex(code);
-                  lcd_putc('*');
-                  lcd_putint(anzahlpakete);
-                  lcd_putc('*');
-                  lcd_putint(abschnittnummer);
-                  sendbuffer[0] = 0xC1;
-                  usb_rawhid_send((void*)sendbuffer, 50);
-                  lcd_putc('*');
-                  lcd_gotoxy(18,1);
-                  lcd_putc('W');
-                  lcd_putc('P');
-                  
-                  usbtask |= (1<<EEPROM_WRITE_PAGE_TASK);
-                  masterstatus |= (1<<SUB_TASK_BIT);
-               }break;
+                  writeerr = mmc_disk_write ((void*)mmcbuffer,1+ (mmcwritecounter & 0x800),1);
+                  lcd_gotoxy(18,3);
+                  lcd_puthex(writeerr);
+
+
+                }break;
                   
                   
                   
                   
                   
                   // ---------------------------------------------------
-                  // MARK: C4 Write EEPROM Byte
+                  // MARK: C4
                   // ---------------------------------------------------
                   
                case 0xC4: // Write EEPROM Byte  // 10 ms
                {
-                  //OSZI_A_TOGG;
-                  usb_readcount=0;
-                  //abschnittnummer++;
-                  eepromstartadresse = buffer[1] | (buffer[2]<<8);
-                  eeprom_databyte = buffer[3];
-                  
-                  //anzahlpakete = buffer[3];
-                  //eepromstatus |= (1<<EE_WRITE);
-                  lcd_gotoxy(18,1);
-                  lcd_putc('W');
-                  lcd_putc('1');
-                  //lcd_putc('*');
-                  
-                  
-                  
-                  sendbuffer[0] = 0xC5;
-                  
-                  sendbuffer[1] = eepromstartadresse & 0xFF;
-                  sendbuffer[2] = (eepromstartadresse & 0xFF00)>>8;
-                  
-                  sendbuffer[3] = buffer[3];
-                  sendbuffer[4] = 0; //check;// ist bytechecksumme
-                  sendbuffer[5] = usb_readcount;
-                  
-                  sendbuffer[6] = 0xFF;
-                  sendbuffer[7] = 0xFF;
-                  
-                  sendbuffer[8] = 0xF8;
-                  sendbuffer[9] = 0xFB;
-                  
-                  usb_rawhid_send((void*)sendbuffer, 50);
-                  
-                  masterstatus |= (1<<SUB_TASK_BIT);
-                  //usbtask |= (1<<EEPROM_WRITE_BYTE_TASK);
                   
                }break;
                   // ---------------------------------------------------
@@ -1656,7 +1597,7 @@ int main (void)
                   
             } // switch code
              
-             */
+            
          }
          //OSZI_A_HI;
          //lcd_putc('$');

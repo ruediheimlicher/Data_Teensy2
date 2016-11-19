@@ -24,7 +24,7 @@
 /*******************************************/
 /* Hardware connection, edit as needed     */
 /*******************************************/
-// the bus is on PB4:
+// the bus is on PB7:
 #define OW_GET_IN    (OW_IN&(1<<OW_PIN))
 // output and low:
 #define OW_DIR_OUT_LOW()   OW_OUT&=~(1<<OW_PIN);OW_DDR|=1<<OW_PIN

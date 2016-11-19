@@ -9,8 +9,8 @@
 #define OSZIPORTDDR        DDRD
 #define OSZIPORTPIN        PIND
 #define OSZI_PULS_A        0
-#define PULSA        4
-#define PULSB        5
+#define PULSA              4
+#define PULSB              5
 #define OSZI_PULS_B        5
 
 
@@ -39,12 +39,16 @@
 #define SPI_SS             PB0
 #endif
 
+// bits von usbstatus
+
+#define WRITEAUTO          0
+#define WRITETEMPERATUR    1
 
 // bits von spistatus
 
-#define WRITE_SPANNUNG       1
-#define WRITE_STROM          2
-#define SPI_RUN_BIT        7
+#define WRITE_SPANNUNG        1
+#define WRITE_STROM           2
+#define SPI_RUN_BIT           7
 
 #define SOFT_SPI_PORT           PORTB
 #define SOFT_SPI_DDR            DDRB
@@ -55,10 +59,10 @@
 #define SOFT_SPI_SS_1            PB0
 
 
-#define DSLO 8
-#define DSHI 9
-#define SERVOALO  10
-#define SERVOAHI  11
+#define DSLO               8
+#define DSHI               9
+#define SERVOALO           10
+#define SERVOAHI           11
 // EEPROM Speicherorte
 
 #define TASK_OFFSET        0x2000 // Ort fuer Einstellungen

@@ -25,7 +25,7 @@ extern "C" {
 //
 //#if(MCU == atmega32u4)//        # Teensy 2.0
    
-#define OW_PIN  PORTB7
+#define OW_PIN  PORTB4
    
 #define OW_IN   PINB
 #define OW_OUT  PORTB
