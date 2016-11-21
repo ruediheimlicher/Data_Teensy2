@@ -35,7 +35,7 @@
 
 // You can change these to give your code its own name.
 #define STR_MANUFACTURER	L"Ruedi_Heimlicher"
-#define STR_PRODUCT		L"DIGITAL_POWER"
+#define STR_PRODUCT		L"DIGITAL_DATA"
 
 // These 4 numbers identify your device.  Set these to
 // something that is (hopefully) not used by any others!
@@ -73,7 +73,8 @@
 #define RAWHID_RX_BUFFER	EP_DOUBLE_BUFFER
 #endif
 
-static const uint8_t PROGMEM endpoint_config_table[] = {
+static const uint8_t PROGMEM endpoint_config_table[] =
+{
 	1, EP_TYPE_INTERRUPT_IN,  EP_SIZE(RAWHID_TX_SIZE) | RAWHID_TX_BUFFER,
 	1, EP_TYPE_INTERRUPT_OUT,  EP_SIZE(RAWHID_RX_SIZE) | RAWHID_RX_BUFFER,
 	0,

@@ -34,6 +34,9 @@
 
 #include "ds18x20.c"
 
+#include "transfer.c"
+
+
 #include "chan_n/mmc_avr_spi.c"
 #include "chan_n/ff.c"
 #include "chan_n/diskio.c"
@@ -933,38 +936,6 @@ uint8_t Tastenwahl(uint8_t Tastaturwert)
 #define setbit(port, bit) (port) |= (1 << (bit))
 #define clearbit(port, bit) (port) &= ~(1 << (bit))
 
-BYTE SD_ReadSector( unsigned long SectorNumber, BYTE *Buffer )
-{
-   BYTE c, i;
-   WORD count;
-   
-   /* send block-read command... */
-   send_cmd( CMD_READ_SINGLE_BLOCK, SectorNumber << 9 );
-   c = xchg_spi(0xFF);
-   i = xchg_spi(0xFF);
-   count = 0xFFFF;
-   
-   /* wait for data token... */
-   while( (i == 0xff) && --count)
-      i = xchg_spi(0xFF);
-   
-   /* handle time out... */
-   if(c || i != 0xFE)
-      return( 1 );
-   
-   /* read the sector... */
-   for( count=0; count<SD_DATA_SIZE; count++)
-      *Buffer++ = xchg_spi(0xFF);
-   
-   /* ignore the checksum... */
-   xchg_spi(0xFF);
-   xchg_spi(0xFF);
-   
-   /* release the CS line... */
-   //SPI_DisableCS();
-   
-   return( 0 );
-}
 
 uint16_t writerand(uint16_t wert)
 {
@@ -1381,6 +1352,7 @@ int main (void)
 //         lcd_puthex(usb_readcount);
 
          uint8_t usberfolg = usb_rawhid_send((void*)sendbuffer, 50);
+        
          //lcd_puthex(usberfolg);
          
          
