@@ -52,7 +52,8 @@
 #define SERVOMIN  1400
 
 
-#define USB_DATENBREITE 32
+#define USB_DATENBREITE 64
+
 
 #define CODE_OFFSET  4
 #define ROTARY_OFFSET  10
@@ -937,6 +938,7 @@ uint8_t Tastenwahl(uint8_t Tastaturwert)
 #define clearbit(port, bit) (port) &= ~(1 << (bit))
 
 
+
 uint16_t writerand(uint16_t wert)
 {
    uint16_t s1 = 100*(sin(M_PI * 2.0 * wert / 360.0)+0.5);
@@ -1008,7 +1010,7 @@ int main (void)
    
 	uint8_t TastaturCount=0;
 		
-	//initADC(1);
+	initADC(0);
 	
 	uint16_t loopcount0=0;
 	uint16_t loopcount1=0;
@@ -1029,7 +1031,7 @@ int main (void)
    uint8_t anzeigecounter=0;
    
    timer0();
-   
+   timer1();
    sei();
    
  
@@ -1347,16 +1349,31 @@ int main (void)
          //lcd_puthex(SPI_Data_counter);
       //   sendbuffer[5] = isrcontrol;
          sendbuffer[4] = 28;
+         sendbuffer[62] = 33;
+         sendbuffer[63] = 34;
 //         lcd_gotoxy(11,0);
  //        lcd_putc('x');
 //         lcd_puthex(usb_readcount);
-
-         uint8_t usberfolg = usb_rawhid_send((void*)sendbuffer, 50);
-        
+         
+         if (usbstatus & (1<<WRITEAUTO))
+         {
+            uint8_t usberfolg = usb_rawhid_send((void*)sendbuffer, 50);
+         }
          //lcd_puthex(usberfolg);
          
+         if(loopcount1%2 == 0)
+         {
+#pragma mark ADC
+            uint16_t adcwert = adc_read(0);
+            lcd_gotoxy(0,1);
+            lcd_putint12(adcwert);
+            
+            sendbuffer[ADCLO]= (adcwert & 0x00FF);
+            sendbuffer[ADCHI]= ((adcwert & 0xFF00)>>8);
+         }
          
-         if(loopcount1%64 == 0)
+         
+         if(loopcount1%32 == 0)
          {
             
             
@@ -1386,11 +1403,13 @@ int main (void)
                lcd_putc('.');
                lcd_putint1(gTempdata[0]%10);
             }
+
             
             sendbuffer[DSLO]=((gTempdata[0])& 0x00FF);// T kommt mit Faktor 10 vom DS. Auf TWI ist T verdoppelt
             sendbuffer[DSHI]=((gTempdata[0]& 0xFF00)>>8);// T kommt mit Faktor 10 vom DS. Auf TWI ist T verdoppelt
             //lcd_gotoxy(10,0);
             //lcd_putint(sendbuffer[DSLO]);
+            //lcd_putc(' ');
             //lcd_putint(sendbuffer[DSHI]);
             // Halbgrad addieren
             if (gTempdata[0]%10 >=5) // Dezimalstelle ist >=05: Wert  aufrunden, 1 addieren
@@ -1423,16 +1442,12 @@ int main (void)
       //OSZI_D_LO;
       r=0;
       
-      
-      
-  //    SPI_PORT |= (1<<SPI); // PIN setzen, um Master die Praesenz zu melden
-
-      
-      
-      
-      r = usb_rawhid_recv((void*)recvbuffer, 0); // 5us
-      //OSZI_D_HI;
-      // MARK: USB_READ
+      if (usbstatus & (1<<READAUTO))
+      {
+         
+         r = usb_rawhid_recv((void*)recvbuffer, 0); // 5us
+      }
+       // MARK: USB_READ
       
       if (r > 0)
       {
@@ -1467,7 +1482,8 @@ int main (void)
          
          OCR1A = (recvbuffer[10] | (recvbuffer[11]<<8));
         // lcd_putc('*');
-         
+         lcd_gotoxy(12,0);
+         lcd_putint12(OCR1A);
 
       //   for (i=0;i<SPI_BUFFERSIZE;i++)
          {
@@ -1503,11 +1519,11 @@ int main (void)
          lcd_gotoxy(17,0);
          lcd_puthex(spi_txbuffer[0]);
         */
-         
+         /*
          spi_txbuffer[1] = recvbuffer[1];
          spi_txbuffer[2] = recvbuffer[2];
          spi_txbuffer[3] = recvbuffer[3];
-         
+         */
          /*
          spi_txbuffer[0] = 0x81;
          uint16_t tempwert = 444;
@@ -1551,8 +1567,24 @@ int main (void)
 
 
                 }break;
+
+#pragma mark TRANSFERBLOCK
+               case TRANSFERBLOCK:
+               {  // //Transfer an Interface. Byte 1: Abschnitt Byte 2,3: Blockoffset Byte 4,5: Anzahl Blocks
+                  uint8_t abschnitt = mmcbuffer[1];
+                  uint16_t blockoffset = mmcbuffer[2] | (mmcbuffer[3]<<8);
+                  uint16_t anzahlblocks = mmcbuffer[4] | (mmcbuffer[5]<<8);
+                  uint16_t blockindex = 0;
+                  for (blockindex=0;blockindex< 0x38;blockindex++) // 56 bytes fuer sendbuffer
+                  {
+                     readerr = mmc_disk_read((void*)mmcbuffer, abschnitt + blockindex,1);
+                     if (readerr==0)
+                     {
+                        
+                     }
                   
-                  
+                  }
+               }break;
                   
                   
                   

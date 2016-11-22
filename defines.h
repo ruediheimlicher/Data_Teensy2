@@ -3,6 +3,8 @@
 
 #define OHNE_INTERFACE 0
 
+#define USB_PACKETSIZE 64
+
 #define TEST 1
 //Oszi
 #define OSZIPORT           PORTD
@@ -42,7 +44,10 @@
 // bits von usbstatus
 
 #define WRITEAUTO          0
-#define WRITETEMPERATUR    1
+
+#define WRITETEMPERATUR    2
+
+#define READAUTO           1
 
 // bits von spistatus
 
@@ -58,14 +63,28 @@
 #define SOFT_SPI_SS_0            PB0
 #define SOFT_SPI_SS_1            PB0
 
-
+// USB Eingang
+// Temperatur
 #define DSLO               8
 #define DSHI               9
+
+// ADC
+#define  ADCLO             10
+#define  ADCHI             11
+
+// USB Ausgang
 #define SERVOALO           10
 #define SERVOAHI           11
+
+
 // EEPROM Speicherorte
 
+#pragma mark               Transfer
+#define TRANSFERBLOCK      0xA0  //Transfer an Interface. Byte 1: Abschnitt Byte 2,3: Blockoffset Byte 4,5: Anzahl Blocks
 #define TASK_OFFSET        0x2000 // Ort fuer Einstellungen
+
+
+
 
 #define SETTINGBREITE      0x100; // 256 Bytes, Breite des Settingblocks fuer ein model
 
@@ -79,6 +98,7 @@
 #define FUNKTION_OFFSET    0x60 // 96
 #define DEVICE_OFFSET      0x70 // 122
 #define AUSGANG_OFFSET     0x80 // 128
+
 
 
 #define SAVE_LEVEL         0
