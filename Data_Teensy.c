@@ -1355,7 +1355,7 @@ int main (void)
  //        lcd_putc('x');
 //         lcd_puthex(usb_readcount);
          
-         if (usbstatus & (1<<WRITEAUTO))
+ //        if (usbstatus & (1<<WRITEAUTO))
          {
             uint8_t usberfolg = usb_rawhid_send((void*)sendbuffer, 50);
          }
