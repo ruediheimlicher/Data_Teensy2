@@ -77,14 +77,22 @@
 #define SERVOAHI           11
 
 
+// logger
+#define LOGGER_START       0xA0
+#define LOGGER_CONT        0xA1
+
+#define LOGGER_STOP        0xAF
+
+
 // EEPROM Speicherorte
 
 #pragma mark               Transfer
+
 #define TRANSFERBLOCK      0xA0  //Transfer an Interface. Byte 1: Abschnitt Byte 2,3: Blockoffset Byte 4,5: Anzahl Blocks
 #define TASK_OFFSET        0x2000 // Ort fuer Einstellungen
 
-
-
+#define PACKET_SIZE     0x30 // 48 bytes fuer USB-Transfer
+#define PACKET_START    8    // erstes byte
 
 #define SETTINGBREITE      0x100; // 256 Bytes, Breite des Settingblocks fuer ein model
 

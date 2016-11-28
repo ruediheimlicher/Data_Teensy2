@@ -195,7 +195,7 @@ DWORD AccSize;				/* Work register for fs command */
 WORD AccFiles, AccDirs;
 
 #define WRITENEXT 1
-#define WRITETAKT 0x00FF
+#define WRITETAKT 0x008F
 BYTE RtcOk;				/* RTC is available */
 volatile UINT Timer;	/* Performance timer (100Hz increment) */
 volatile uint8_t mmcbuffer[SD_DATA_SIZE] = {};
@@ -712,8 +712,8 @@ ISR(TIMER0_COMPA_vect)
    {
       writecounter1=0;
       writecounter2++;
-      lcd_gotoxy(0,2);
-      lcd_putint12(writecounter2);
+//      lcd_gotoxy(0,2);
+//      lcd_putint12(writecounter2);
       if (writecounter2 >= 0x0002)
       {
          mmcstatus |= (1<<WRITENEXT);
@@ -1078,26 +1078,26 @@ int main (void)
    readerr = mmc_disk_read ((void*)mmcbuffer,1,	1);
    //readerr = mmc_disk_write ((void*)mmcbuffer,1,	1);
    
-   lcd_gotoxy(0,1);
+//   lcd_gotoxy(0,1);
    
-   lcd_puthex(readerr);
+//   lcd_puthex(readerr);
    
    
-   lcd_putc('*');
+//   lcd_putc('*');
    if (readerr==0)
    {
-      lcd_putc('+');
+//      lcd_putc('+');
       uint16_t i=0;
       for (i=0;i<8;i++)
       {
          if (mmcbuffer[i])
          {
-            lcd_puthex(mmcbuffer[i]);
+//            lcd_puthex(mmcbuffer[i]);
          }
       }
-      lcd_putc('+');
+//      lcd_putc('+');
    }
-  lcd_putc('*');
+//  lcd_putc('*');
    
 
    
@@ -1188,8 +1188,8 @@ int main (void)
          {
             uint16_t tempdata = writerand(mmcwritecounter);
          //   OSZIA_LO;
-            sendbuffer[16] = (tempdata & 0x00FF);
-            sendbuffer[17] = ((tempdata & 0xFF00)>>8);
+       //     sendbuffer[16] = (tempdata & 0x00FF);
+       //     sendbuffer[17] = ((tempdata & 0xFF00)>>8);
             mmcbuffer[mmcwritecounter] = (tempdata & 0x00FF);
             mmcbuffer[mmcwritecounter+1] = ((tempdata & 0xFF00)>>8);
             lcd_gotoxy(0,3);
@@ -1247,9 +1247,9 @@ int main (void)
          //lcd_gotoxy(18,0);
          //lcd_puthex(loopcount1);
          
-         sendbuffer[1] = ((usb_readcount));
-         sendbuffer[2] = (loopcount1 & 0xFF);
-         sendbuffer[3] = 16;
+     //    sendbuffer[1] = ((usb_readcount));
+     //    sendbuffer[2] = (loopcount1 & 0xFF);
+     //    sendbuffer[3] = 16;
         // sendbuffer[5] = spi_rxbuffer[0];
          
          for (int i=0;i<SPI_BUFSIZE;i++)
@@ -1348,14 +1348,14 @@ int main (void)
          //lcd_putc(' ');
          //lcd_puthex(SPI_Data_counter);
       //   sendbuffer[5] = isrcontrol;
-         sendbuffer[4] = 28;
+      //   sendbuffer[4] = 28;
          sendbuffer[62] = 33;
          sendbuffer[63] = 34;
 //         lcd_gotoxy(11,0);
  //        lcd_putc('x');
 //         lcd_puthex(usb_readcount);
          
- //        if (usbstatus & (1<<WRITEAUTO))
+ //       if (usbstatus & (1<<WRITEAUTO))
          {
             uint8_t usberfolg = usb_rawhid_send((void*)sendbuffer, 50);
          }
@@ -1364,12 +1364,19 @@ int main (void)
          if(loopcount1%2 == 0)
          {
 #pragma mark ADC
+            _delay_ms(100);
             uint16_t adcwert = adc_read(0);
+            _delay_ms(100);
+            /*
             lcd_gotoxy(0,1);
             lcd_putint12(adcwert);
-            
-            sendbuffer[ADCLO]= (adcwert & 0x00FF);
-            sendbuffer[ADCHI]= ((adcwert & 0xFF00)>>8);
+            lcd_putc('$');
+            lcd_putint(adcwert & 0x00FF);
+            lcd_putc(' ');
+            lcd_putint((adcwert & 0xFF00)>>8);
+            */
+//            sendbuffer[ADCLO]= (adcwert & 0x00FF);
+//            sendbuffer[ADCHI]= ((adcwert & 0xFF00)>>8);
          }
          
          
@@ -1385,9 +1392,9 @@ int main (void)
                start_temp_meas();
                delay_ms(800);
                read_temp_meas();
-               uint8_t line=1;
+               uint8_t line=0;
                //Sensor 1
-               lcd_gotoxy(10,line);
+               lcd_gotoxy(14,line);
                lcd_puts("T:     \0");
                if (gTempdata[0]/10>=100)
                {
@@ -1405,8 +1412,8 @@ int main (void)
             }
 
             
-            sendbuffer[DSLO]=((gTempdata[0])& 0x00FF);// T kommt mit Faktor 10 vom DS. Auf TWI ist T verdoppelt
-            sendbuffer[DSHI]=((gTempdata[0]& 0xFF00)>>8);// T kommt mit Faktor 10 vom DS. Auf TWI ist T verdoppelt
+//            sendbuffer[DSLO]=((gTempdata[0])& 0x00FF);// T kommt mit Faktor 10 vom DS. Auf TWI ist T verdoppelt
+//            sendbuffer[DSHI]=((gTempdata[0]& 0xFF00)>>8);// T kommt mit Faktor 10 vom DS. Auf TWI ist T verdoppelt
             //lcd_gotoxy(10,0);
             //lcd_putint(sendbuffer[DSLO]);
             //lcd_putc(' ');
@@ -1442,7 +1449,7 @@ int main (void)
       //OSZI_D_LO;
       r=0;
       
-      if (usbstatus & (1<<READAUTO))
+ //     if (usbstatus & (1<<READAUTO))
       {
          
          r = usb_rawhid_recv((void*)recvbuffer, 0); // 5us
@@ -1457,8 +1464,97 @@ int main (void)
          cli();
          usb_readcount++;
          uint8_t code = recvbuffer[0];
-         lcd_gotoxy(18,0);
+         lcd_gotoxy(18,3);
          lcd_puthex(code);
+         
+         switch (code)
+         {
+            case LOGGER_START:
+            {
+               lcd_gotoxy(0,1);
+               lcd_putc('l');
+               lcd_putc(':');
+               sendbuffer[0] = LOGGER_CONT;
+               code = LOGGER_START; // read block starten
+               lcd_putc('c');
+               lcd_puthex(code); // packetcount
+               
+               // Block lesen
+               lcd_puthex(recvbuffer[1]); // startblock lo
+               lcd_puthex(recvbuffer[2]); // startblock hi
+               lcd_putc('*');
+               lcd_puthex(recvbuffer[3]); // packetcount
+               
+               uint16_t startblock = recvbuffer[1] | (recvbuffer[2]<<8); // zu lesender Block auf mmc
+               uint8_t paketindex = 0;
+               
+               uint8_t packetcount = recvbuffer[3] ;// laufender Index Paket, beim Start 0
+              // lcd_gotoxy(12,1);
+              // lcd_puts(">mmc");
+              
+               readerr = mmc_disk_read((void*)mmcbuffer, startblock,1);
+               
+               if (readerr == 0)
+               {
+                  lcd_gotoxy(14,1);
+                  lcd_puts(">OK ");
+                  sendbuffer[PACKET_START -1] = 11;
+                  for (paketindex=0;paketindex< PACKET_SIZE;paketindex++) // 48 bytes fuer sendbuffer
+                  {
+                     sendbuffer[PACKET_START + paketindex] = mmcbuffer[paketindex];
+                     
+                     {
+                        
+                     }
+                     
+                  }
+                  sendbuffer[3] = ++packetcount; //
+               } // if readerr==0
+               else
+               {
+                  lcd_gotoxy(14,1);
+                  lcd_puts(">err");
+               }
+            }break;
+               
+            case LOGGER_CONT:
+            {
+               lcd_gotoxy(0,2);
+               lcd_putc('c');
+               lcd_putc(':');
+               sendbuffer[0] = LOGGER_CONT;
+               lcd_puthex(code); // code
+               
+               
+               // Block lesen
+               lcd_puthex(recvbuffer[1]); // startblock lo
+               lcd_puthex(recvbuffer[2]); // startblock hi
+               lcd_putc('*');
+               lcd_puthex(recvbuffer[3]); // packetcount
+               uint8_t packetcount = recvbuffer[3];
+               
+               uint8_t paketindex = 0;
+               for (paketindex=0;paketindex< PACKET_SIZE;paketindex++) // 48 bytes fuer sendbuffer
+               {
+                  sendbuffer[PACKET_START + paketindex] = mmcbuffer[(packetcount*PACKET_SIZE)+paketindex];
+                  
+                  {
+                     
+                  }
+                  
+               }
+
+               
+              sendbuffer[3] = ++packetcount; //
+            }break;
+               
+            default:
+            {
+               
+            }
+ //              lcd_gotoxy(0,1);
+ //              lcd_putc('x');
+         }
          usbstatus = code;
          
          
@@ -1466,11 +1562,11 @@ int main (void)
          //lcd_puthex(r);
          //lcd_putc('*');
          //lcd_putint2(usb_readcount);
-         lcd_gotoxy(12,2);
-         lcd_putc('P');
+//         lcd_gotoxy(12,2);
+//         lcd_putc('P');
          
-         lcd_puthex(recvbuffer[8]);
-         lcd_puthex(recvbuffer[9]);
+//         lcd_puthex(recvbuffer[8]);
+//         lcd_puthex(recvbuffer[9]);
          
          
 
@@ -1557,50 +1653,7 @@ int main (void)
          {
             //code = 0;//buffer[0];
             
-            switch (code)
-            {
-               case 0x01: // write to sd
-               {
-                  writeerr = mmc_disk_write ((void*)mmcbuffer,1+ (mmcwritecounter & 0x800),1);
-                  lcd_gotoxy(18,3);
-                  lcd_puthex(writeerr);
-
-
-                }break;
-
-#pragma mark TRANSFERBLOCK
-               case TRANSFERBLOCK:
-               {  // //Transfer an Interface. Byte 1: Abschnitt Byte 2,3: Blockoffset Byte 4,5: Anzahl Blocks
-                  uint8_t abschnitt = mmcbuffer[1];
-                  uint16_t blockoffset = mmcbuffer[2] | (mmcbuffer[3]<<8);
-                  uint16_t anzahlblocks = mmcbuffer[4] | (mmcbuffer[5]<<8);
-                  uint16_t blockindex = 0;
-                  for (blockindex=0;blockindex< 0x38;blockindex++) // 56 bytes fuer sendbuffer
-                  {
-                     readerr = mmc_disk_read((void*)mmcbuffer, abschnitt + blockindex,1);
-                     if (readerr==0)
-                     {
-                        
-                     }
-                  
-                  }
-               }break;
-                  
-                  
-                  
-                  // ---------------------------------------------------
-                  // MARK: C4
-                  // ---------------------------------------------------
-                  
-               case 0xC4: // Write EEPROM Byte  // 10 ms
-               {
-                  
-               }break;
-                  // ---------------------------------------------------
-             
-                  
-            } // switch code
-             
+            
             
          }
          //OSZI_A_HI;
