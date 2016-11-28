@@ -76,6 +76,9 @@
 #define SERVOALO           10
 #define SERVOAHI           11
 
+// write SD
+#define WRITE_MMC_TEST     0xF1
+
 
 // logger
 #define LOGGER_START       0xA0

@@ -115,6 +115,7 @@ volatile uint8_t                    out_taskcounter=0;
 //static volatile uint8_t             substatus=0x00; // Tasks fuer Sub
 
 static volatile uint8_t             usbstatus=0x00;
+static volatile uint8_t             usbstatus1=0x00; // recvbuffer[1]
 
 volatile uint8_t                    spistatus=0x00; // was ist zu tun infolge spi
 
@@ -941,9 +942,16 @@ uint8_t Tastenwahl(uint8_t Tastaturwert)
 
 uint16_t writerand(uint16_t wert)
 {
-   uint16_t s1 = 100*(sin(M_PI * 2.0 * wert / 360.0)+0.5);
-   s1 += 50*(sin((M_PI * 2.0 * wert / 240.0)*7));
-   s1 += 50*(sin((M_PI * 2.0 * wert / 120.0)*3));
+   uint16_t s1 = 50*(sin(M_PI * 2.0 * wert / 360.0)+0.5);
+   s1 += 20*(sin((M_PI * 2.0 * wert / 240.0)*7));
+   s1 += 10*(sin((M_PI * 2.0 * wert / 120.0)*3));
+   
+   return s1;
+}
+
+uint8_t writelin(uint16_t wert)
+{
+   uint16_t s1 = wert%16;
    
    return s1;
 }
@@ -1182,16 +1190,19 @@ int main (void)
       /* **** end spi_buffer abfragen **************** */
       
 // MARK:  MMC write
-      if ((mmcstatus & (1<<WRITENEXT)) )
+   //   if ((mmcstatus & (1<<WRITENEXT)) )
+      if (mmcstatus & 0xF1 ) // Test
       {
-         if (usbstatus & (1<<WRITEAUTO))
+         //if (usbstatus & (1<<WRITEAUTO))
+         if (usbstatus1 & 0xF1) // SD beschreiben
          {
-            uint16_t tempdata = writerand(mmcwritecounter);
+            //uint16_t tempdata = writerand(mmcwritecounter);
+            uint16_t tempdata = writelin(mmcwritecounter);
          //   OSZIA_LO;
        //     sendbuffer[16] = (tempdata & 0x00FF);
        //     sendbuffer[17] = ((tempdata & 0xFF00)>>8);
             mmcbuffer[mmcwritecounter] = (tempdata & 0x00FF);
-            mmcbuffer[mmcwritecounter+1] = ((tempdata & 0xFF00)>>8);
+     //       mmcbuffer[mmcwritecounter+1] = ((tempdata & 0xFF00)>>8);
             lcd_gotoxy(0,3);
             lcd_putint12(mmcwritecounter & 0x1FF);
             lcd_putc(' ');
@@ -1375,8 +1386,8 @@ int main (void)
             lcd_putc(' ');
             lcd_putint((adcwert & 0xFF00)>>8);
             */
-//            sendbuffer[ADCLO]= (adcwert & 0x00FF);
-//            sendbuffer[ADCHI]= ((adcwert & 0xFF00)>>8);
+            sendbuffer[ADCLO]= (adcwert & 0x00FF);
+            sendbuffer[ADCHI]= ((adcwert & 0xFF00)>>8);
          }
          
          
@@ -1412,8 +1423,8 @@ int main (void)
             }
 
             
-//            sendbuffer[DSLO]=((gTempdata[0])& 0x00FF);// T kommt mit Faktor 10 vom DS. Auf TWI ist T verdoppelt
-//            sendbuffer[DSHI]=((gTempdata[0]& 0xFF00)>>8);// T kommt mit Faktor 10 vom DS. Auf TWI ist T verdoppelt
+            sendbuffer[DSLO]=((gTempdata[0])& 0x00FF);// T kommt mit Faktor 10 vom DS. Auf TWI ist T verdoppelt
+            sendbuffer[DSHI]=((gTempdata[0]& 0xFF00)>>8);// T kommt mit Faktor 10 vom DS. Auf TWI ist T verdoppelt
             //lcd_gotoxy(10,0);
             //lcd_putint(sendbuffer[DSLO]);
             //lcd_putc(' ');
@@ -1476,8 +1487,8 @@ int main (void)
                lcd_putc(':');
                sendbuffer[0] = LOGGER_CONT;
                code = LOGGER_START; // read block starten
-               lcd_putc('c');
-               lcd_puthex(code); // packetcount
+               //lcd_putc('c');
+               //lcd_puthex(code); // packetcount
                
                // Block lesen
                lcd_puthex(recvbuffer[1]); // startblock lo
@@ -1497,7 +1508,7 @@ int main (void)
                if (readerr == 0)
                {
                   lcd_gotoxy(14,1);
-                  lcd_puts(">OK ");
+                  lcd_puts(">OK");
                   sendbuffer[PACKET_START -1] = 11;
                   for (paketindex=0;paketindex< PACKET_SIZE;paketindex++) // 48 bytes fuer sendbuffer
                   {
@@ -1523,6 +1534,8 @@ int main (void)
                lcd_putc('c');
                lcd_putc(':');
                sendbuffer[0] = LOGGER_CONT;
+               code = LOGGER_CONT;
+               lcd_putc('c');
                lcd_puthex(code); // code
                
                
@@ -1532,7 +1545,6 @@ int main (void)
                lcd_putc('*');
                lcd_puthex(recvbuffer[3]); // packetcount
                uint8_t packetcount = recvbuffer[3];
-               
                uint8_t paketindex = 0;
                for (paketindex=0;paketindex< PACKET_SIZE;paketindex++) // 48 bytes fuer sendbuffer
                {
@@ -1546,6 +1558,21 @@ int main (void)
 
                
               sendbuffer[3] = ++packetcount; //
+            }break;
+               
+            case WRITE_MMC_TEST:
+            {
+               lcd_gotoxy(0,2);
+               lcd_putc('t');
+               lcd_putc(':');
+               sendbuffer[0] = WRITE_MMC_TEST;
+   //            code = WRITE_MMC_TEST;
+               lcd_putc('c');
+               lcd_puthex(code); // code
+               usbstatus1 = recvbuffer[1]; // bit 0: sd mit testdaten beschreiben
+               lcd_putc('-');
+               lcd_puthex(usbstatus1); // code
+               
             }break;
                
             default:
