@@ -196,7 +196,7 @@ DWORD AccSize;				/* Work register for fs command */
 WORD AccFiles, AccDirs;
 
 #define WRITENEXT 1
-#define WRITETAKT 0x008F
+#define WRITETAKT 0x001F
 BYTE RtcOk;				/* RTC is available */
 volatile UINT Timer;	/* Performance timer (100Hz increment) */
 volatile uint8_t mmcbuffer[SD_DATA_SIZE] = {};
@@ -1191,10 +1191,10 @@ int main (void)
       
 // MARK:  MMC write
    //   if ((mmcstatus & (1<<WRITENEXT)) )
-      if (mmcstatus & 0xF1 ) // Test
+      if (mmcstatus & (1<<WRITENEXT) ) //
       {
          //if (usbstatus & (1<<WRITEAUTO))
-         if (usbstatus1 & 0xF1) // SD beschreiben
+         if (usbstatus == WRITE_MMC_TEST) // Test: SD beschreiben
          {
             //uint16_t tempdata = writerand(mmcwritecounter);
             uint16_t tempdata = writelin(mmcwritecounter);
@@ -1214,19 +1214,20 @@ int main (void)
             lcd_puthex(((tempdata & 0xFF00)>>8));
             lcd_putc(' ');
 */
-            
          }
          
          
-//         writeerr = mmc_disk_write ((void*)mmcbuffer,1+ (mmcwritecounter & 0x800),1);
+         
+         writeerr = mmc_disk_write ((void*)mmcbuffer,1+ (mmcwritecounter & 0x800),1);
         // OSZIA_HI;
 
-//         lcd_gotoxy(18,3);
-//         lcd_puthex(writeerr);
+         lcd_gotoxy(14,3);
+         lcd_puthex(writeerr);
          //lcd_putc('*');
          
          mmcstatus &= ~(1<<WRITENEXT);
          mmcwritecounter++;
+      
       }
       //OSZI_A_TOGG;
       
@@ -1386,8 +1387,8 @@ int main (void)
             lcd_putc(' ');
             lcd_putint((adcwert & 0xFF00)>>8);
             */
-            sendbuffer[ADCLO]= (adcwert & 0x00FF);
-            sendbuffer[ADCHI]= ((adcwert & 0xFF00)>>8);
+ //           sendbuffer[ADCLO]= (adcwert & 0x00FF);
+ //           sendbuffer[ADCHI]= ((adcwert & 0xFF00)>>8);
          }
          
          
@@ -1475,6 +1476,7 @@ int main (void)
          cli();
          usb_readcount++;
          uint8_t code = recvbuffer[0];
+         usbstatus = code;
          lcd_gotoxy(18,3);
          lcd_puthex(code);
          
@@ -1503,6 +1505,7 @@ int main (void)
               // lcd_gotoxy(12,1);
               // lcd_puts(">mmc");
               
+               // Beim Start Block aus SD lesen
                readerr = mmc_disk_read((void*)mmcbuffer, startblock,1);
                
                if (readerr == 0)
@@ -1514,12 +1517,12 @@ int main (void)
                   {
                      sendbuffer[PACKET_START + paketindex] = mmcbuffer[paketindex];
                      
-                     {
-                        
-                     }
                      
                   }
                   sendbuffer[3] = ++packetcount; //
+                  uint8_t usberfolg = usb_rawhid_send((void*)sendbuffer, 50);
+                  lcd_gotoxy(18,1);
+                  lcd_puthex(usberfolg);
                } // if readerr==0
                else
                {
@@ -1550,14 +1553,14 @@ int main (void)
                {
                   sendbuffer[PACKET_START + paketindex] = mmcbuffer[(packetcount*PACKET_SIZE)+paketindex];
                   
-                  {
-                     
-                  }
-                  
                }
-
                
-              sendbuffer[3] = ++packetcount; //
+               
+               sendbuffer[3] = ++packetcount; //
+               uint8_t usberfolg = usb_rawhid_send((void*)sendbuffer, 50);
+               lcd_gotoxy(18,2);
+               lcd_puthex(usberfolg);
+               
             }break;
                
             case WRITE_MMC_TEST:
@@ -1570,6 +1573,7 @@ int main (void)
                lcd_putc('c');
                lcd_puthex(code); // code
                usbstatus1 = recvbuffer[1]; // bit 0: sd mit testdaten beschreiben
+               mmcwritecounter = 0;
                lcd_putc('-');
                lcd_puthex(usbstatus1); // code
                
