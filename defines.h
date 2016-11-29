@@ -3,7 +3,7 @@
 
 #define OHNE_INTERFACE 0
 
-#define USB_PACKETSIZE 32
+#define USB_PACKETSIZE 64
 
 #define TEST 1
 //Oszi
