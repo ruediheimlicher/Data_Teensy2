@@ -52,7 +52,7 @@
 #define SERVOMIN  1400
 
 
-#define USB_DATENBREITE 64
+#define USB_DATENBREITE 32
 
 
 #define CODE_OFFSET  4
@@ -1361,8 +1361,8 @@ int main (void)
          //lcd_puthex(SPI_Data_counter);
       //   sendbuffer[5] = isrcontrol;
       //   sendbuffer[4] = 28;
-         sendbuffer[62] = 33;
-         sendbuffer[63] = 34;
+         sendbuffer[6] = 33;
+         sendbuffer[7] = 34;
 //         lcd_gotoxy(11,0);
  //        lcd_putc('x');
 //         lcd_puthex(usb_readcount);
@@ -1484,11 +1484,14 @@ int main (void)
          {
             case LOGGER_START:
             {
+               lcd_clr_line(2);
                lcd_gotoxy(0,1);
                lcd_putc('l');
                lcd_putc(':');
                sendbuffer[0] = LOGGER_CONT;
-               code = LOGGER_START; // read block starten
+               
+               
+               //code = LOGGER_START; // read block starten
                //lcd_putc('c');
                //lcd_puthex(code); // packetcount
                
@@ -1533,11 +1536,12 @@ int main (void)
                
             case LOGGER_CONT:
             {
+               lcd_clr_line(2);
                lcd_gotoxy(0,2);
                lcd_putc('c');
                lcd_putc(':');
                sendbuffer[0] = LOGGER_CONT;
-               code = LOGGER_CONT;
+               //code = LOGGER_CONT;
                lcd_putc('c');
                lcd_puthex(code); // code
                
@@ -1565,6 +1569,7 @@ int main (void)
                
             case WRITE_MMC_TEST:
             {
+               lcd_clr_line(2);
                lcd_gotoxy(0,2);
                lcd_putc('t');
                lcd_putc(':');
@@ -1581,7 +1586,22 @@ int main (void)
                
             default:
             {
-               
+               lcd_clr_line(2);
+               lcd_gotoxy(0,2);
+               lcd_putc('d');
+               lcd_putc(':');
+               sendbuffer[0] = DEFAULT;
+               //            code = WRITE_MMC_TEST;
+               lcd_putc('c');
+               lcd_puthex(code); // code
+               usbstatus1 = recvbuffer[1]; // bit 0: sd mit testdaten beschreiben
+               mmcwritecounter = 0;
+               lcd_putc('-');
+               lcd_puthex(usbstatus1); // code
+               //uint8_t usberfolg = usb_rawhid_send((void*)sendbuffer, 50);
+               //lcd_gotoxy(18,2);
+               //lcd_puthex(usberfolg);
+
             }
  //              lcd_gotoxy(0,1);
  //              lcd_putc('x');

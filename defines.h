@@ -3,7 +3,7 @@
 
 #define OHNE_INTERFACE 0
 
-#define USB_PACKETSIZE 64
+#define USB_PACKETSIZE 32
 
 #define TEST 1
 //Oszi
@@ -80,6 +80,9 @@
 #define WRITE_MMC_TEST     0xF1
 
 
+// default
+#define DEFAULT            0xFE
+
 // logger
 #define LOGGER_START       0xA0
 #define LOGGER_CONT        0xA1
@@ -94,7 +97,8 @@
 #define TRANSFERBLOCK      0xA0  //Transfer an Interface. Byte 1: Abschnitt Byte 2,3: Blockoffset Byte 4,5: Anzahl Blocks
 #define TASK_OFFSET        0x2000 // Ort fuer Einstellungen
 
-#define PACKET_SIZE     0x30 // 48 bytes fuer USB-Transfer
+//#define PACKET_SIZE     0x30 // 48 bytes fuer USB-Transfer
+#define PACKET_SIZE     0x18 // 24 bytes fuer USB-Transfer
 #define PACKET_START    8    // erstes byte
 
 #define SETTINGBREITE      0x100; // 256 Bytes, Breite des Settingblocks fuer ein model
