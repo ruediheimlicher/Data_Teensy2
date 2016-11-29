@@ -1523,9 +1523,11 @@ int main (void)
                      
                   }
                   sendbuffer[3] = ++packetcount; //
+                  /*
                   uint8_t usberfolg = usb_rawhid_send((void*)sendbuffer, 50);
                   lcd_gotoxy(18,1);
                   lcd_puthex(usberfolg);
+                   */
                } // if readerr==0
                else
                {
@@ -1561,10 +1563,11 @@ int main (void)
                
                
                sendbuffer[3] = ++packetcount; //
+               /*
                uint8_t usberfolg = usb_rawhid_send((void*)sendbuffer, 50);
                lcd_gotoxy(18,2);
                lcd_puthex(usberfolg);
-               
+               */
             }break;
                
             case WRITE_MMC_TEST:
@@ -1583,6 +1586,9 @@ int main (void)
                lcd_puthex(usbstatus1); // code
                
             }break;
+               
+               
+               
                
             default:
             {
@@ -1603,8 +1609,7 @@ int main (void)
                //lcd_puthex(usberfolg);
 
             }
- //              lcd_gotoxy(0,1);
- //              lcd_putc('x');
+               
          }
          usbstatus = code;
          
