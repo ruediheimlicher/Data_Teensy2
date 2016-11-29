@@ -1483,6 +1483,16 @@ int main (void)
          
          switch (code)
          {
+               
+            case DEFAULT: // start read
+            {
+               lcd_clr_line(2);
+               sendbuffer[0] = DEFAULT;
+               sendbuffer[3] = 0;
+               mmcwritecounter = 0;
+               
+            }break;
+               
             case LOGGER_START:
             {
                lcd_clr_line(2);
@@ -1559,7 +1569,6 @@ int main (void)
                for (paketindex=0;paketindex< PACKET_SIZE;paketindex++) // 48 bytes fuer sendbuffer
                {
                   sendbuffer[PACKET_START + paketindex] = mmcbuffer[(packetcount*PACKET_SIZE)+paketindex];
-                  
                }
                
                
@@ -1569,6 +1578,21 @@ int main (void)
                lcd_gotoxy(18,2);
                lcd_puthex(usberfolg);
                */
+            }break;
+               
+            case LOGGER_STOP:
+            {
+               lcd_clr_line(1);
+               lcd_clr_line(2);
+               lcd_gotoxy(0,2);
+               lcd_putc('s');
+               lcd_putc(':');
+               lcd_puthex(code); // code
+               mmcwritecounter = 0;
+               usbstatus = 0;
+               sendbuffer[0] = LOGGER_STOP;
+               sendbuffer[3] = 0; // packetcount
+
             }break;
                
             case WRITE_MMC_TEST:
