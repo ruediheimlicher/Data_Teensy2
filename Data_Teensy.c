@@ -52,7 +52,8 @@
 #define SERVOMIN  1400
 
 
-#define USB_DATENBREITE 32
+#define USB_DATENBREITE USB_PACKETSIZE
+
 
 
 #define CODE_OFFSET  4

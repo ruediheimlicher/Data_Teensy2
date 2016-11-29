@@ -48,9 +48,9 @@
 // for your communication.  You do not need to use it
 // all, but allocating more than necessary means reserved
 // bandwidth is no longer available to other USB devices.
-#define RAWHID_TX_SIZE		32	// transmit packet size
+#define RAWHID_TX_SIZE		USB_PACKETSIZE	// transmit packet size
 #define RAWHID_TX_INTERVAL	2	// max # of ms between transmit packets
-#define RAWHID_RX_SIZE		32	// receive packet size
+#define RAWHID_RX_SIZE		USB_PACKETSIZE	// receive packet size
 #define RAWHID_RX_INTERVAL	8	// max # of ms between receive packets
 
 
@@ -60,7 +60,7 @@
  *
  **************************************************************************/
 
-#define ENDPOINT0_SIZE		32
+#define ENDPOINT0_SIZE		USB_PACKETSIZE
 #define RAWHID_INTERFACE	0
 #define RAWHID_TX_ENDPOINT	1
 #define RAWHID_RX_ENDPOINT	2
