@@ -26,7 +26,7 @@
 
 #define USB_PRIVATE_INCLUDE
 #include "usb_rawhid.h"
-
+#include "defines.h"
 /**************************************************************************
  *
  *  Configurable Options
