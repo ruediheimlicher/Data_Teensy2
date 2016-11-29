@@ -943,16 +943,16 @@ uint8_t Tastenwahl(uint8_t Tastaturwert)
 
 uint16_t writerand(uint16_t wert)
 {
-   uint16_t s1 = 50*(sin(M_PI * 2.0 * wert / 360.0)+0.5);
-   s1 += 20*(sin((M_PI * 2.0 * wert / 240.0)*7));
-   s1 += 10*(sin((M_PI * 2.0 * wert / 120.0)*3));
+   uint16_t s1 = 50*(sin(M_PI * wert / 180.0))+100;
+   s1 += 20*(cos((M_PI  * wert / 130.0)*7));
+   s1 += 10*(sin((M_PI  * wert / 50.0)*3));
    
    return s1;
 }
 
 uint8_t writelin(uint16_t wert)
 {
-   uint16_t s1 = wert%16;
+   uint16_t s1 = wert%48;
    
    return s1;
 }
@@ -1195,10 +1195,10 @@ int main (void)
       if (mmcstatus & (1<<WRITENEXT) ) //
       {
          //if (usbstatus & (1<<WRITEAUTO))
-         if (usbstatus == WRITE_MMC_TEST) // Test: SD beschreiben
+         if ((usbstatus == WRITE_MMC_TEST)&& (mmcwritecounter < 512)) // Test: SD beschreiben
          {
             //uint16_t tempdata = writerand(mmcwritecounter);
-            uint16_t tempdata = writelin(mmcwritecounter);
+            uint16_t tempdata = writerand(mmcwritecounter);
          //   OSZIA_LO;
        //     sendbuffer[16] = (tempdata & 0x00FF);
        //     sendbuffer[17] = ((tempdata & 0xFF00)>>8);
@@ -1216,10 +1216,13 @@ int main (void)
             lcd_putc(' ');
 */
          }
+         else
+         {
+            usbstatus = DEFAULT;
+         }
          
          
-         
-         writeerr = mmc_disk_write ((void*)mmcbuffer,1+ (mmcwritecounter & 0x800),1);
+         writeerr = mmc_disk_write ((void*)mmcbuffer,2 + (mmcwritecounter & 0x800),1);
         // OSZIA_HI;
 
          lcd_gotoxy(14,3);
