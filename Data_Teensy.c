@@ -576,7 +576,7 @@ void timer1_init(void)
 {
     // Quelle http://www.mikrocontroller.net/topic/103629
     
-    OSZI_A_HI ; // Test: data fuer SR
+   _HI ; // Test: data fuer SR
     _delay_us(5);
     //#define FRAME_TIME 20 // msec
     KANAL_DDR |= (1<<KANAL; // Kanal Ausgang
@@ -1380,20 +1380,43 @@ int main (void)
          if(loopcount1%2 == 0)
          {
 #pragma mark ADC
-            _delay_ms(100);
+            _delay_ms(10);
             uint16_t adcwert = adc_read(0);
             _delay_ms(100);
-            /*
-            lcd_gotoxy(0,1);
-            lcd_putint12(adcwert);
-            lcd_putc('$');
+            
+            lcd_gotoxy(10,0);
             lcd_putint(adcwert & 0x00FF);
             lcd_putc(' ');
-            lcd_putint((adcwert & 0xFF00)>>8);
-            */
- //           sendbuffer[ADCLO]= (adcwert & 0x00FF);
- //           sendbuffer[ADCHI]= ((adcwert & 0xFF00)>>8);
-         }
+            lcd_putint2((adcwert & 0xFF00)>>8);
+
+           // adcwert *=10;
+            // vor Korrektur
+            sendbuffer[ADCLO]= (adcwert & 0x00FF);
+            sendbuffer[ADCHI]= ((adcwert & 0xFF00)>>8);
+            
+            //adcwert /= 2;
+            lcd_gotoxy(0,1);
+     //       lcd_putint12(adcwert/4); // *256/1024
+     //       lcd_putc(' ');
+            OSZIA_LO;
+            double adcfloat = adcwert;
+            adcfloat = adcfloat *2490/1024; // kalibrierung VREF, 1V > 0.999, Faktor 10
+            
+            adcwert = (((uint16_t)adcfloat)&0xFFFF);
+            OSZIA_HI;
+            lcd_putint12(adcwert);
+            
+            
+ //           sendbuffer[ADCLO+2]= (adcwert & 0x00FF);
+ //           sendbuffer[ADCHI+2]= ((adcwert & 0xFF00)>>8);
+
+            lcd_putc(' ');
+            lcd_gotoxy(10,1);
+            lcd_putint(adcwert & 0x00FF);
+            lcd_putc(' ');
+            lcd_putint2((adcwert & 0xFF00)>>8);
+            
+          }
          
          
          if(loopcount1%32 == 0)
