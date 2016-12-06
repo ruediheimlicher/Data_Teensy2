@@ -48,7 +48,7 @@
 #define WRITETEMPERATUR    2
 
 #define READAUTO           1
-
+#define TEENSYPRESENT      7
 // bits von spistatus
 
 #define WRITE_SPANNUNG        1
@@ -88,7 +88,7 @@
 #define LOGGER_CONT        0xA1
 
 #define LOGGER_STOP        0xAF
-
+#define USB_STOP           0xAA
 
 // EEPROM Speicherorte
 

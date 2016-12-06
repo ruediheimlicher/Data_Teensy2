@@ -894,7 +894,8 @@ ISR(USB_COM_vect)
 			UDADDR = wValue | (1<<ADDEN);
 			return;
 		}
-		if (bRequest == SET_CONFIGURATION && bmRequestType == 0) {
+		if (bRequest == SET_CONFIGURATION && bmRequestType == 0)
+      {
 			usb_configuration = wValue;
 			usb_send_in();
 			cfg = endpoint_config_table;
