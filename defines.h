@@ -41,6 +41,7 @@
 #define SPI_SS             PB0
 #endif
 
+
 // bits von usbstatus
 
 #define WRITEAUTO          0
@@ -48,7 +49,13 @@
 #define WRITETEMPERATUR    2
 
 #define READAUTO           1
+
+
+// bits von hoststatus
 #define TEENSYPRESENT      7
+#define MESSUNG_OK      6
+
+
 // bits von spistatus
 
 #define WRITE_SPANNUNG        1
@@ -62,6 +69,18 @@
 #define SOFT_SPI_SCLK           PB1
 #define SOFT_SPI_SS_0            PB0
 #define SOFT_SPI_SS_1            PB0
+
+
+// USB buffer
+
+
+#define TAKT_LO_BYTE 14
+#define TAKT_HI_BYTE 15
+
+#define DATA_START_BYTE   16    // erstes byte fuer Data
+
+#define DATACOUNT_LO       12 // Nummer der Messung, fortlaufend
+#define DATACOUNT_HI       13
 
 // USB Eingang
 // Temperatur
@@ -88,6 +107,9 @@
 #define LOGGER_CONT        0xA1
 
 #define LOGGER_STOP        0xAF
+
+#define LOGGER_SETTING      0xB0 // Setzen der Settings fuer die Messungen
+
 #define USB_STOP           0xAA
 
 // EEPROM Speicherorte

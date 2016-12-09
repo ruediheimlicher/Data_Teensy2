@@ -112,8 +112,17 @@ volatile uint8_t                    in_taskcounter=0;
 volatile uint8_t                    out_taskcounter=0;
 
 
+// counter fuer Mess-Intervall
+volatile uint16_t                    intervallcounter=0;
 
-//static volatile uint8_t             substatus=0x00; // Tasks fuer Sub
+// mess-Intervall
+volatile uint16_t                    intervall=5; // defaultwert, 5s
+// counter fuer Mess-Intervall
+volatile uint16_t                    messungcounter=0; // Anzahl messungen fortlaufend
+
+
+//static volatile uint8_t            substatus=0x00; // Tasks fuer Sub
+static volatile uint8_t             hoststatus=0x00;
 
 static volatile uint8_t             usbstatus=0x00;
 static volatile uint8_t             usbstatus1=0x00; // recvbuffer[1]
@@ -129,6 +138,14 @@ static volatile uint8_t             masterstatus = 0;
 static volatile uint8_t             tastaturstatus = 0;
 
 volatile uint8_t status=0;
+
+
+// Logger
+volatile uint16_t messintervall = 1;
+
+
+
+// PWM
 
 volatile uint8_t                    PWM=0;
 static volatile uint8_t             pwmposition=0;
@@ -197,7 +214,7 @@ DWORD AccSize;				/* Work register for fs command */
 WORD AccFiles, AccDirs;
 
 #define WRITENEXT 1
-#define WRITETAKT 0x001F
+#define WRITETAKT 0x0032
 BYTE RtcOk;				/* RTC is available */
 volatile UINT Timer;	/* Performance timer (100Hz increment) */
 volatile uint8_t mmcbuffer[SD_DATA_SIZE] = {};
@@ -706,12 +723,22 @@ volatile uint16_t timer2BatterieCounter=0;
 #pragma mark TIMER0_COMPA
 ISR(TIMER0_COMPA_vect)
 {
-   //lcd_putc('+');
+      //lcd_putc('+');
 //   Timer1--;			/* Performance counter for this module */
    mmc_disk_timerproc();	/* Drive timer procedure of low level disk I/O module */
    writecounter1++;
-   if (writecounter1 >= WRITETAKT)
+   if (writecounter1 >= WRITETAKT) // 1s
    {
+      OSZIA_LO;
+      intervallcounter++;
+      if (intervallcounter >= intervall)
+      {
+         intervallcounter = 0;
+         hoststatus |= (1<<MESSUNG_OK); // Messung ausloesen
+      }
+      
+      
+      
       writecounter1=0;
       writecounter2++;
 //      lcd_gotoxy(0,2);
@@ -722,6 +749,7 @@ ISR(TIMER0_COMPA_vect)
          writecounter2 = 0;
       }
    }
+   OSZIA_HI;
 }
 
 
@@ -969,23 +997,12 @@ int main (void)
 	// set for 16 MHz clock
 	CPU_PRESCALE(CPU_8MHz); // Strom sparen
    
-	// Initialize the USB, and then wait for the host to set configuration.
-	// If the Teensy is powered without a PC connected to the USB port,
-	// this will wait forever.
    
    //   sei();
 	Master_Init();
    SPI_PORT_Init();
    SPI_Master_init();
 
-   // ---------------------------------------------------
-   // in attach verschobe, nur wenn USB eingesteckt
-     usb_init();
-   	while (!usb_configured()) /* wait */ ;
-   
-	// Wait an extra second for the PC's operating system to load drivers
-	// and do whatever it does to actually be ready for input
-	_delay_ms(100);
    
    volatile    uint8_t outcounter=0;
    volatile    uint8_t testdata =0x00;
@@ -1021,6 +1038,78 @@ int main (void)
 		
 	initADC(0);
 	
+   // ---------------------------------------------------
+   // in attach verschobe, nur wenn USB eingesteckt
+   
+   // Initialize the USB, and then wait for the host to set configuration.
+   // If the Teensy is powered without a PC connected to the USB port,
+   // this will wait forever.
+
+   usb_init();
+   uint16_t usbwaitcounter = 0;
+   //lcd_putc('a');
+   // Ueberspringen wenn kein Host eingesteckt
+   hoststatus &= ~(1<< TEENSYPRESENT);
+   
+   
+   while ((usbwaitcounter < 0xFFFA))// && (!usb_configured()))
+   {
+      //lcd_gotoxy(0,3);
+      //lcd_putint12(usbwaitcounter);
+      _delay_ms(1);
+      if (usb_configured())
+      {
+         hoststatus |= (1<< TEENSYPRESENT);
+         //hoststatus = 1;
+         //lcd_gotoxy(19,3);
+         //lcd_putc('$');
+        break;
+         
+      }
+      
+      usbwaitcounter++;
+      if (usbwaitcounter > 0x100)
+      {
+         //lcd_gotoxy(19,3);
+         //lcd_putc('!');
+         break;
+      }
+   }
+   
+   /*
+   while ((!usb_configured()) )//|| (usbwaitcounter < 0xFF))
+   {
+     usbwaitcounter++;
+      _delay_ms(1);
+      if (usbwaitcounter > 0xFFFE)
+      {
+         continue;
+      }
+      
+   }
+   */
+    /* wait */ ;
+   lcd_gotoxy(19,0);
+   if (hoststatus & (1<<TEENSYPRESENT))
+   {
+      lcd_putc('$');
+   }
+   else
+   {
+      lcd_putc('X');
+   }
+   /*
+   lcd_putint12(usbwaitcounter);
+   lcd_putc(' ');
+   lcd_puthex(hoststatus);
+   lcd_putc('*');
+   lcd_puthex(usb_configured());
+   lcd_putc('*');
+    */
+   // Wait an extra second for the PC's operating system to load drivers
+   // and do whatever it does to actually be ready for input
+   _delay_ms(100);
+
 	uint16_t loopcount0=0;
 	uint16_t loopcount1=0;
 	/*
@@ -1047,7 +1136,12 @@ int main (void)
    
  //  masterstatus |= (1<<SUB_READ_EEPROM_BIT); // sub soll EE lesen
 #pragma mark MMC init
+   lcd_gotoxy(0,0);
+   lcd_putc('a');
+
    DSTATUS initerr = mmc_disk_initialize();
+   lcd_putc('b');
+
    //lcd_gotoxy(0,0);
    //lcd_putc('*');
    //lcd_puthex(initerr);
@@ -1235,6 +1329,47 @@ int main (void)
       }
       //OSZI_A_TOGG;
       
+      
+      #pragma mark Intervall
+      if (hoststatus & (1<<MESSUNG_OK)) // Intervall abgelaufen, Messung vornehmen
+      {
+         
+         hoststatus &= ~(1<<MESSUNG_OK);
+          // ADC
+         uint16_t adcwert = adc_read(0);
+         _delay_ms(100);
+         
+         lcd_gotoxy(10,0);
+         lcd_putint(adcwert & 0x00FF);
+         lcd_putc(' ');
+         lcd_putint2((adcwert & 0xFF00)>>8);
+         
+         // adcwert *=10;
+         // vor Korrektur
+         sendbuffer[ADCLO]= (adcwert & 0x00FF);
+         sendbuffer[ADCHI]= ((adcwert & 0xFF00)>>8);
+         
+         sendbuffer[DATACOUNT_LO] = (messungcounter & 0x00FF);
+         sendbuffer[DATACOUNT_HI] = ((messungcounter & 0xFF00)>>8);
+
+         
+         //adcwert /= 2;
+         lcd_gotoxy(0,1);
+         //       lcd_putint12(adcwert/4); // *256/1024
+         //       lcd_putc(' ');
+         //OSZIA_LO;
+         double adcfloat = adcwert;
+         adcfloat = adcfloat *2490/1024; // kalibrierung VREF, 1V > 0.999, Faktor 10, 45 us
+         
+         adcwert = (((uint16_t)adcfloat)&0xFFFF);
+         //OSZIA_HI;
+         lcd_putint12(adcwert);
+
+         uint8_t usberfolg = usb_rawhid_send((void*)sendbuffer, 50);
+         messungcounter++;
+      }
+      
+      
 		if (loopcount0==0xDFFF)
 		{
          //SPI_PORT ^= (1<<SPI_CLK);
@@ -1365,19 +1500,19 @@ int main (void)
          //lcd_puthex(SPI_Data_counter);
       //   sendbuffer[5] = isrcontrol;
       //   sendbuffer[4] = 28;
-         sendbuffer[6] = 33;
-         sendbuffer[7] = 34;
+      //   sendbuffer[6] = 33;
+      //   sendbuffer[7] = 34;
 //         lcd_gotoxy(11,0);
  //        lcd_putc('x');
 //         lcd_puthex(usb_readcount);
          
- //       if (usbstatus & (1<<WRITEAUTO))
+        if (usbstatus & (1<<WRITEAUTO))
          {
             uint8_t usberfolg = usb_rawhid_send((void*)sendbuffer, 50);
          }
          //lcd_puthex(usberfolg);
          
-         if(loopcount1%2 == 0)
+         if ((loopcount1%2 == 0) && (usbstatus & (1<<WRITEAUTO)))
          {
 #pragma mark ADC
             _delay_ms(10);
@@ -1398,12 +1533,12 @@ int main (void)
             lcd_gotoxy(0,1);
      //       lcd_putint12(adcwert/4); // *256/1024
      //       lcd_putc(' ');
-            OSZIA_LO;
+            //OSZIA_LO;
             double adcfloat = adcwert;
-            adcfloat = adcfloat *2490/1024; // kalibrierung VREF, 1V > 0.999, Faktor 10
+            adcfloat = adcfloat *2490/1024; // kalibrierung VREF, 1V > 0.999, Faktor 10, 45 us
             
             adcwert = (((uint16_t)adcfloat)&0xFFFF);
-            OSZIA_HI;
+            //OSZIA_HI;
             lcd_putint12(adcwert);
             
             
@@ -1415,7 +1550,10 @@ int main (void)
             lcd_putint(adcwert & 0x00FF);
             lcd_putc(' ');
             lcd_putint2((adcwert & 0xFF00)>>8);
+            lcd_putc('*');
+            lcd_puthex(usb_configured());
             
+
           }
          
          
@@ -1667,6 +1805,23 @@ int main (void)
                sendbuffer[0] = USB_STOP;
                
             }break;
+               
+            case LOGGER_SETTING:
+            {
+               sendbuffer[0] = LOGGER_SETTING;
+               intervall = recvbuffer[TAKT_LO_BYTE] | (recvbuffer[TAKT_HI_BYTE]<<8);
+               
+               lcd_clr_line(2);
+               lcd_gotoxy(0,2);
+               lcd_putc('i');
+               lcd_putc(':');
+               lcd_puthex(code); // code
+               lcd_putc(' ');
+               lcd_putint12(intervall);
+               
+
+            }break;
+               
                
                
             default:
