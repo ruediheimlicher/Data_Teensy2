@@ -1747,6 +1747,7 @@ int main (void)
                
             case LOGGER_START:
             {
+               hoststatus &= ~(1<<MESSUNG_OK);
                hoststatus |= (1<<DOWNLOAD_OK); // Download von SD, Messungen unterbrechen
                
                lcd_clr_line(2);
@@ -1789,11 +1790,6 @@ int main (void)
                      
                      
                   }
-                  sendbuffer[3] = ++packetcount; //
-                  
-                  uint8_t usberfolg = usb_rawhid_send((void*)sendbuffer, 50);
-                  lcd_gotoxy(18,1);
-                  lcd_puthex(usberfolg);
                   
                } // if readerr==0
                else
@@ -1801,6 +1797,12 @@ int main (void)
                   lcd_gotoxy(14,1);
                   lcd_puts(">err");
                }
+               sendbuffer[3] = ++packetcount; //
+               sendbuffer[1] = readerr;
+               uint8_t usberfolg = usb_rawhid_send((void*)sendbuffer, 50);
+               lcd_gotoxy(18,1);
+               lcd_puthex(usberfolg);
+
             }break;
                
             case LOGGER_CONT:
@@ -1904,6 +1906,7 @@ int main (void)
                
             case MESSUNG_START:
             {
+               messungcounter = 0;
                sendbuffer[0] = MESSUNG_START;
                lcd_clr_line(2);
                lcd_gotoxy(0,2);
