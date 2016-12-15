@@ -54,6 +54,7 @@
 // bits von hoststatus
 #define TEENSYPRESENT      7
 #define MESSUNG_OK      6
+#define DOWNLOAD_OK     5
 
 
 // bits von spistatus
@@ -72,6 +73,19 @@
 
 
 // USB buffer
+
+// Bits in usbstatus1
+#define SAVE_SD_BIT        0
+#define SAVE_SD_RUN_BIT        1
+#define SAVE_SD_STOP_BIT        2
+
+// Bytes fuer Sicherungsort der Daten auf SD
+#define ABSCHNITT_BYTE     2
+#define BLOCKOFFSETLO_BYTE      3
+#define BLOCKOFFSETHI_BYTE      4
+
+#define MESSUNG_START      0xC0
+#define MESSUNG_STOP       0xC1
 
 
 #define TAKT_LO_BYTE 14
@@ -109,6 +123,8 @@
 #define LOGGER_STOP        0xAF
 
 #define LOGGER_SETTING      0xB0 // Setzen der Settings fuer die Messungen
+#define LOGGER_DATA        0xB1
+
 
 #define USB_STOP           0xAA
 
@@ -116,7 +132,7 @@
 
 #pragma mark               Transfer
 
-#define TRANSFERBLOCK      0xA0  //Transfer an Interface. Byte 1: Abschnitt Byte 2,3: Blockoffset Byte 4,5: Anzahl Blocks
+#define TRANSFERBLOCK      0xA0  //Array fuer Transfer an Interface. Byte 1: Abschnitt Byte 2,3: Blockoffset Byte 4,5: Anzahl Blocks
 #define TASK_OFFSET        0x2000 // Ort fuer Einstellungen
 
 #define PACKET_SIZE     0x30 // 48 bytes fuer USB-Transfer
