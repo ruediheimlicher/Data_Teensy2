@@ -142,6 +142,8 @@ volatile uint8_t status=0;
 
 // Logger
 volatile uint16_t messintervall = 1;
+volatile uint8_t savesdposition = 0;
+volatile uint8_t blockcounter = 0;
 
 
 
@@ -1136,11 +1138,11 @@ int main (void)
    
  //  masterstatus |= (1<<SUB_READ_EEPROM_BIT); // sub soll EE lesen
 #pragma mark MMC init
-   lcd_gotoxy(0,0);
-   lcd_putc('a');
+   //lcd_gotoxy(0,0);
+   //lcd_putc('a');
 
    DSTATUS initerr = mmc_disk_initialize();
-   lcd_putc('b');
+   //lcd_putc('b');
 
    //lcd_gotoxy(0,0);
    //lcd_putc('*');
@@ -1515,6 +1517,7 @@ int main (void)
          if ((loopcount1%2 == 0) && (usbstatus & (1<<WRITEAUTO)))
          {
 #pragma mark ADC
+/*
             _delay_ms(10);
             uint16_t adcwert = adc_read(0);
             _delay_ms(100);
@@ -1541,10 +1544,10 @@ int main (void)
             //OSZIA_HI;
             lcd_putint12(adcwert);
             
-            
+ */
  //           sendbuffer[ADCLO+2]= (adcwert & 0x00FF);
  //           sendbuffer[ADCHI+2]= ((adcwert & 0xFF00)>>8);
-
+/*
             lcd_putc(' ');
             lcd_gotoxy(10,1);
             lcd_putint(adcwert & 0x00FF);
@@ -1552,7 +1555,7 @@ int main (void)
             lcd_putint2((adcwert & 0xFF00)>>8);
             lcd_putc('*');
             lcd_puthex(usb_configured());
-            
+*/
 
           }
          
@@ -1625,7 +1628,7 @@ int main (void)
       // Start USB
       //OSZI_D_LO;
       r=0;
-      
+      recvbuffer[0] = 0;
  //     if (usbstatus & (1<<READAUTO))
       {
          
@@ -1639,18 +1642,21 @@ int main (void)
           cli();
          usb_readcount++;
          uint8_t code = recvbuffer[0];
+         //lcd_gotoxy(18,3);
+         //lcd_puthex(code);
+
          if (!(usbstatus == code))
          {
             usbstatus = code;
             lcd_clr_line(2);
-            lcd_gotoxy(18,2);
+            lcd_gotoxy(18,3);
             lcd_puthex(code);
          }
 
          switch (code)
          {
                
-            case DEFAULT: // start read
+            case DEFAULT: // cont read
             {
                //lcd_clr_line(2);
                sendbuffer[0] = DEFAULT;

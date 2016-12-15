@@ -346,9 +346,9 @@ DSTATUS mmc_disk_initialize (void)
 	ty = 0;
 	if (send_cmd(CMD0, 0) == 1)
    {			/* Put the card SPI mode */
-		lcd_putc('6');
+		//lcd_putc('6');
       Timer1 = 100;						/* Initialization timeout of 1000 msec */
-		lcd_putc('7');
+		//lcd_putc('7');
       if (send_cmd(CMD8, 0x1AA) == 1)
       {	/* Is the card SDv2? */
          //lcd_putc('7');
@@ -365,7 +365,7 @@ DSTATUS mmc_disk_initialize (void)
 		}
       else
       {
-         lcd_putc('8');
+        // lcd_putc('8');
          /* SDv1 or MMCv3 */
 			if (send_cmd(ACMD41, 0) <= 1)
          {
