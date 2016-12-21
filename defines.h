@@ -122,7 +122,7 @@
 
 #define LOGGER_STOP        0xAF
 
-#define LOGGER_SETTING      0xB0 // Setzen der Settings fuer die Messungen
+#define LOGGER_SETTING     0xB0 // Setzen der Settings fuer die Messungen
 #define LOGGER_DATA        0xB1
 
 
@@ -137,7 +137,7 @@
 
 #define PACKET_SIZE     0x30 // 48 bytes fuer USB-Transfer
 //#define PACKET_SIZE     0x18 // 24 bytes fuer USB-Transfer
-#define PACKET_START    8    // erstes byte
+#define DATA_START_BYTE    16    // erstes  databyte
 
 #define SETTINGBREITE      0x100; // 256 Bytes, Breite des Settingblocks fuer ein model
 
