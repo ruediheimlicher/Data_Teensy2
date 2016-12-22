@@ -87,6 +87,10 @@
 #define MESSUNG_START      0xC0
 #define MESSUNG_STOP       0xC1
 
+#define STARTSEKUNDELO_BYTE      5
+#define STARTSEKU£NDEHI_BYTE      6
+
+#define DATENBREITE_BYTE         7
 
 #define TAKT_LO_BYTE 14
 #define TAKT_HI_BYTE 15
@@ -137,7 +141,6 @@
 
 #define PACKET_SIZE     0x30 // 48 bytes fuer USB-Transfer
 //#define PACKET_SIZE     0x18 // 24 bytes fuer USB-Transfer
-#define DATA_START_BYTE    16    // erstes  databyte
 
 #define SETTINGBREITE      0x100; // 256 Bytes, Breite des Settingblocks fuer ein model
 

@@ -143,7 +143,7 @@ volatile uint8_t status=0;
 // Logger
 volatile uint16_t messintervall = 1;
 volatile uint8_t saveSDposition = 0;
-volatile uint8_t blockcounter = 0;
+volatile uint8_t blockcounter = 0; // Block, in den gesichert werden soll, mit einem Offset von 1 (Block 0 ist header der SD).
 
 
 
@@ -992,7 +992,7 @@ uint16_t writerand(uint16_t wert)
 
 uint8_t writelin(uint16_t wert)
 {
-   uint16_t s1 = wert%48;
+   uint8_t s1 = wert%48;
    
    return s1;
 }
@@ -1264,6 +1264,7 @@ int main (void)
    // timer1(); PORTB5,6
    
    
+   
    volatile   uint8_t old_H=0;
    volatile   uint8_t old_L=0;
    uint8_t teensy_err =0;
@@ -1282,8 +1283,15 @@ int main (void)
    //OSZIPORT |= (1<<OSZI_PULS_A);
    
    
+   
    // MARK:  while
    uint16_t mmcwritecounter=0;
+   uint16_t ii=0;
+   for (ii=0;ii<512;ii++)
+   {
+      mmcbuffer[ii] = writelin(ii);
+   }
+   
    while (1)
    {
       //OSZI_B_LO;
@@ -1414,12 +1422,25 @@ int main (void)
           */
          if (usbstatus1 & (1<<SAVE_SD_RUN_BIT)) // Daten in mmcbuffer speichern, immer 2 bytes
          {
+            if (saveSDposition == 0)
+            {
+               lcd_gotoxy(0,2);
+               lcd_puthex(mmcbuffer[saveSDposition]);
+            }
             
             lcd_gotoxy(5,1);
-            lcd_putint(saveSDposition); // o .. 255, pos im mmcbuffer, immer 2 byte pro messung
+            lcd_putint(saveSDposition); // 0 .. 255, pos im mmcbuffer, immer 2 byte pro messung
+            
+
             mmcbuffer[2*saveSDposition] = (adcwert & 0x00FF);
             mmcbuffer[2*saveSDposition+1] = ((adcwert & 0xFF00)>>8);
             lcd_putc(' ');
+            if (saveSDposition == 0)
+            {
+               lcd_gotoxy(6,2);
+               lcd_puthex(mmcbuffer[saveSDposition]);
+            }
+
             lcd_putint12(mmcwritecounter % 0x800);
             saveSDposition++;
             mmcwritecounter += 2; // Zaehlung write-Prozesse, immer 2 bytes pro messung
@@ -1435,7 +1456,9 @@ int main (void)
                lcd_putc(' ');
                lcd_puthex(blockcounter);
                saveSDposition = 0;
-               sendbuffer[BLOCKOFFSETLO_BYTE] = blockcounter & 0x00FF; // Nummer des geschriebenen Blocks
+               sendbuffer[BLOCKOFFSETLO_BYTE] = blockcounter & 0x00FF; // Nummer des geschriebenen Blocks lo
+               sendbuffer[BLOCKOFFSETHI_BYTE] = (blockcounter & 0xFF00)>>8; // Nummer des geschriebenen Blocks hi
+               
                blockcounter++;
             }
          }
@@ -1454,6 +1477,8 @@ int main (void)
             lcd_puthex(blockcounter);
             saveSDposition = 0;
             sendbuffer[BLOCKOFFSETLO_BYTE] = blockcounter & 0x00FF;
+            sendbuffer[BLOCKOFFSETHI_BYTE] = (blockcounter & 0xFF00)>>8; // Nummer des geschriebenen Blocks hi
+
          }
          
          //adcwert /= 2;
@@ -1825,6 +1850,8 @@ int main (void)
                uint8_t packetcount = recvbuffer[3] ;// laufender Index Paket, beim Start 0
                // lcd_gotoxy(12,1);
                // lcd_puts(">mmc");
+               lcd_gotoxy(0,3);
+               lcd_puthex(startblock);
                
                // Beim Start Block aus SD lesen
                readerr = mmc_disk_read((void*)mmcbuffer, startblock,1);
@@ -1976,18 +2003,21 @@ int main (void)
                usbstatus = code;
                usbstatus1 = recvbuffer[1];
                
+               
                mmcwritecounter = 0;
+               
+               saveSDposition = 0; // Start der Messung immer am Anfang des Blocks
                
                abschnittnummer = recvbuffer[ABSCHNITT_BYTE]; // Abschnitt,
                
-               saveSDposition = recvbuffer[BLOCKOFFSETLO_BYTE] | (recvbuffer[BLOCKOFFSETHI_BYTE]<<8);
+               blockcounter = recvbuffer[BLOCKOFFSETLO_BYTE] | (recvbuffer[BLOCKOFFSETHI_BYTE]<<8);
                
                lcd_putc(' ');
                lcd_putint12(saveSDposition);
                lcd_gotoxy(8,3);
                lcd_puts("start ");
-               
-               
+               lcd_puthex(mmcbuffer[saveSDposition]);
+               _delay_ms(200);
             }break;
                
                // MARK: MESSUNG_STOP
