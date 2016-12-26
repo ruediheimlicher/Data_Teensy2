@@ -1287,10 +1287,24 @@ int main (void)
    // MARK:  while
    uint16_t mmcwritecounter=0;
    uint16_t ii=0;
-   for (ii=0;ii<512;ii++)
+   while (ii<0xFF)
    {
-      mmcbuffer[ii] = writelin(ii);
+      uint16_t wert =ii+200;
+      mmcbuffer[2*ii] = wert & 0x00FF;
+      mmcbuffer[2*ii+1] = (wert & 0xFF00)>>8;
+      ii += 1;
+
    }
+   
+   writeerr = mmc_disk_write ((void*)mmcbuffer,1 ,1); // Block 1 ist system
+   // OSZIA_HI;
+   
+   lcd_gotoxy(8,3);
+   lcd_puts("save ");
+   lcd_puthex(writeerr);
+   lcd_putc(' ');
+   lcd_puthex(blockcounter);
+
    
    while (1)
    {
@@ -1317,7 +1331,7 @@ int main (void)
             //     sendbuffer[16] = (tempdata & 0x00FF);
             //     sendbuffer[17] = ((tempdata & 0xFF00)>>8);
             mmcbuffer[mmcwritecounter] = (tempdata & 0x00FF);
-            //       mmcbuffer[mmcwritecounter+1] = ((tempdata & 0xFF00)>>8);
+            mmcbuffer[mmcwritecounter+1] = ((tempdata & 0xFF00)>>8);
             lcd_gotoxy(0,3);
             lcd_putint12(mmcwritecounter & 0x1FF);
             lcd_putc(' ');
@@ -2017,7 +2031,7 @@ int main (void)
                lcd_gotoxy(8,3);
                lcd_puts("start ");
                lcd_puthex(mmcbuffer[saveSDposition]);
-               _delay_ms(200);
+               delay_ms(200);
             }break;
                
                // MARK: MESSUNG_STOP
