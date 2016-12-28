@@ -1285,6 +1285,7 @@ int main (void)
    
    
    // MARK:  while
+   /*
    uint16_t mmcwritecounter=0;
    uint16_t ii=0;
    while (ii<0xFF)
@@ -1304,7 +1305,7 @@ int main (void)
    lcd_puthex(writeerr);
    lcd_putc(' ');
    lcd_puthex(blockcounter);
-
+    */
    
    while (1)
    {
@@ -1440,6 +1441,7 @@ int main (void)
             {
                lcd_gotoxy(0,2);
                lcd_puthex(mmcbuffer[saveSDposition]);
+               
             }
             
             lcd_gotoxy(5,1);
@@ -1522,7 +1524,7 @@ int main (void)
       }// if (hoststatus & (1<<DOWNLOAD_OK))
       
       
-      if (loopcount0==0xDFFF)
+      if (loopcount0==0xCFFF)
       {
          //SPI_PORT ^= (1<<SPI_CLK);
          //SPI_PORT ^= (1<<SPI_MISO);
@@ -1989,6 +1991,7 @@ int main (void)
                sendbuffer[0] = LOGGER_SETTING;
                usbstatus1 = recvbuffer[1];
                intervall = recvbuffer[TAKT_LO_BYTE] | (recvbuffer[TAKT_HI_BYTE]<<8);
+               
                
                lcd_clr_line(2);
                lcd_gotoxy(0,2);
