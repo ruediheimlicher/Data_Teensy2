@@ -5,26 +5,28 @@
 
 #define USB_PACKETSIZE 64
 
-#define TEST 1
+#define TEST 0
 //Oszi
 #define OSZIPORT           PORTD
 #define OSZIPORTDDR        DDRD
 #define OSZIPORTPIN        PIND
 #define OSZI_PULS_A        0
 #define PULSA              4
-#define PULSB              5
-#define OSZI_PULS_B        5
+//#define PULSB              5
+//#define OSZI_PULS_B        5
+
+#define TEST_PIN           5
 
 
 #define OSZIA_LO OSZIPORT &= ~(1<<PULSA)
 #define OSZIA_HI OSZIPORT |= (1<<PULSA)
 #define OSZIA_TOGG OSZIPORT ^= (1<<PULSA)
 
-
+/*
 #define OSZI_B_LO OSZIPORT &= ~(1<<OSZI_PULS_B)
 #define OSZI_B_HI OSZIPORT |= (1<<OSZI_PULS_B)
 #define OSZI_B_TOGG OSZIPORT ^= (1<<OSZI_PULS_B)
-
+*/
 
 
 
@@ -92,6 +94,8 @@
 
 #define DATENBREITE_BYTE         7
 
+#define PACKETCOUNT_BYTE         8
+
 #define TAKT_LO_BYTE 14
 #define TAKT_HI_BYTE 15
 
@@ -102,8 +106,8 @@
 
 // USB Eingang
 // Temperatur
-#define DSLO               8
-#define DSHI               9
+#define DSLO               12
+#define DSHI               13
 
 // ADC
 #define  ADCLO             10
@@ -127,7 +131,7 @@
 #define LOGGER_STOP        0xAF
 
 #define LOGGER_SETTING     0xB0 // Setzen der Settings fuer die Messungen
-#define LOGGER_DATA        0xB1
+#define MESSUNG_DATA        0xB1
 
 
 #define USB_STOP           0xAA

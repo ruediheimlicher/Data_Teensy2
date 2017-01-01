@@ -431,9 +431,14 @@ void Master_Init(void)
    OSZIPORTDDR |= (1<<PULSA);	//Pin 0 von  als Ausgang fuer OSZI
    OSZIPORT |= (1<<PULSA);		// HI
    
+   /*
    OSZIPORTDDR |= (1<<PULSB);		//Pin 1 von  als Ausgang fuer OSZI
    OSZIPORT |= (1<<PULSB);		//Pin   von   als Ausgang fuer OSZI
+   */
    
+   OSZIPORTDDR &= ~(1<<TEST_PIN);		//Pin 1 von  als Eingang fuer Test-Pin. active LO
+   OSZIPORT |= (1<<TEST_PIN);		//Pin   von   als Ausgang fuer OSZI
+
    /*
     TASTENDDR &= ~(1<<TASTE0);	//Bit 0 von PORT B als Eingang fŸr Taste 0
     TASTENPORT |= (1<<TASTE0);	//Pull-up
@@ -1270,9 +1275,12 @@ int main (void)
    uint8_t teensy_err =0;
    uint8_t testfix=0;
    
+   uint16_t mmcwritecounter=0;
    
    OSZIPORTDDR |= (1<<PULSA);	//Pin 0 von  als Ausgang fuer OSZI
    OSZIPORT |= (1<<PULSA);		// HI
+   
+   
    
    //  OSZIPORTDDR |= (1<<OSZI_PULS_B);		//Pin 1 von  als Ausgang fuer OSZI
    //  OSZIPORT |= (1<<OSZI_PULS_B);		//Pin   von   als Ausgang fuer OSZI
@@ -1285,27 +1293,29 @@ int main (void)
    
    
    // MARK:  while
-   /*
-   uint16_t mmcwritecounter=0;
-   uint16_t ii=0;
-   while (ii<0xFF)
-   {
-      uint16_t wert =ii+200;
-      mmcbuffer[2*ii] = wert & 0x00FF;
-      mmcbuffer[2*ii+1] = (wert & 0xFF00)>>8;
-      ii += 1;
-
-   }
    
-   writeerr = mmc_disk_write ((void*)mmcbuffer,1 ,1); // Block 1 ist system
-   // OSZIA_HI;
-   
-   lcd_gotoxy(8,3);
-   lcd_puts("save ");
-   lcd_puthex(writeerr);
-   lcd_putc(' ');
-   lcd_puthex(blockcounter);
-    */
+  if (TEST || (!(OSZIPORT & (1<<TEST_PIN)))) // Testdaten schreiben
+  {
+     uint16_t ii=0;
+     while (ii<0xFF)
+     {
+        uint16_t wert =500 - ii;
+        mmcbuffer[2*ii] = wert & 0x00FF;
+        mmcbuffer[2*ii+1] = (wert & 0xFF00)>>8;
+        ii += 1;
+        
+     }
+     
+     writeerr = mmc_disk_write ((void*)mmcbuffer,2 ,1); // Block 1 ist system
+     
+     // OSZIA_HI;
+     
+     lcd_gotoxy(6,3);
+     lcd_puts("save ");
+     lcd_puthex(writeerr);
+     lcd_putc(' ');
+     lcd_puthex(blockcounter);
+  }
    
    while (1)
    {
@@ -1419,7 +1429,9 @@ int main (void)
          // adcwert *=10;
          // vor Korrektur
          
-         sendbuffer[0]= LOGGER_DATA;
+         // code fuer
+         
+         sendbuffer[0]= MESSUNG_DATA;
          
          // Data von ADC laden
          sendbuffer[ADCLO]= (adcwert & 0x00FF);
@@ -1437,27 +1449,22 @@ int main (void)
           */
          if (usbstatus1 & (1<<SAVE_SD_RUN_BIT)) // Daten in mmcbuffer speichern, immer 2 bytes
          {
-            if (saveSDposition == 0)
-            {
-               lcd_gotoxy(0,2);
-               lcd_puthex(mmcbuffer[saveSDposition]);
-               
-            }
             
-            lcd_gotoxy(5,1);
+            lcd_gotoxy(8,1);
             lcd_putint(saveSDposition); // 0 .. 255, pos im mmcbuffer, immer 2 byte pro messung
             
-
             mmcbuffer[2*saveSDposition] = (adcwert & 0x00FF);
             mmcbuffer[2*saveSDposition+1] = ((adcwert & 0xFF00)>>8);
             lcd_putc(' ');
-            if (saveSDposition == 0)
+            lcd_putint12(mmcwritecounter % 0x800);
+            lcd_putc(' ');
+            lcd_puthex(blockcounter);
+
+            if (saveSDposition == 0) // Data an 0
             {
-               lcd_gotoxy(6,2);
+               lcd_gotoxy(3,3);
                lcd_puthex(mmcbuffer[saveSDposition]);
             }
-
-            lcd_putint12(mmcwritecounter % 0x800);
             saveSDposition++;
             mmcwritecounter += 2; // Zaehlung write-Prozesse, immer 2 bytes pro messung
             
@@ -1466,7 +1473,7 @@ int main (void)
                writeerr = mmc_disk_write ((void*)mmcbuffer,1 + blockcounter,1); // Block 1 ist system
                // OSZIA_HI;
                
-               lcd_gotoxy(8,3);
+               lcd_gotoxy(6,3);
                lcd_puts("save ");
                lcd_puthex(writeerr);
                lcd_putc(' ');
@@ -1478,15 +1485,16 @@ int main (void)
                blockcounter++;
             }
          }
-         else if (usbstatus1 & (1<<SAVE_SD_STOP_BIT)) // Schreiben beenden, letzten Block noch schreieben
+         else if (usbstatus1 & (1<<SAVE_SD_STOP_BIT)) // Schreiben beenden, letzten Block noch schreiben
          {
             usbstatus1 &= ~(1<<SAVE_SD_STOP_BIT);
             usbstatus1 &= ~(1<<SAVE_SD_RUN_BIT);   // fortlaufendes Schreiben beenden
             // Daten sichern
-            writeerr = mmc_disk_write ((void*)mmcbuffer,1 + blockcounter,1); // Block 1 ist system
+            // ** DIFF writeerr = mmc_disk_write ((void*)mmcbuffer,1 + blockcounter,1); // Block 1 ist system
+            writeerr = mmc_disk_write ((void*)mmcbuffer,1 ,1); // Block 1 ist system
             // OSZIA_HI;
             
-            lcd_gotoxy(8,3);
+            lcd_gotoxy(6,3);
             lcd_puts("resc ");
             lcd_puthex(writeerr);
             lcd_putc(' ');
@@ -1860,10 +1868,17 @@ int main (void)
                lcd_putc('*');
                lcd_puthex(recvbuffer[3]); // packetcount
                
+               // old
                uint16_t startblock = recvbuffer[1] | (recvbuffer[2]<<8); // zu lesender Block auf mmc
+
+               //uint16_t startblock = recvbuffer[BLOCKOFFSETLO_BYTE] | (recvbuffer[BLOCKOFFSETHI_BYTE]<<8); // zu lesender Block auf mmc
                uint8_t paketindex = 0;
                
+               // old
                uint8_t packetcount = recvbuffer[3] ;// laufender Index Paket, beim Start 0
+
+              // uint8_t packetcount = recvbuffer[PACKETCOUNT_BYTE] ;// laufender Index Paket, beim Start 0
+//               packetcount=0;
                // lcd_gotoxy(12,1);
                // lcd_puts(">mmc");
                lcd_gotoxy(0,3);
@@ -1876,7 +1891,7 @@ int main (void)
                if (readerr == 0)
                {
                   lcd_gotoxy(14,1);
-                  lcd_puts(">OK");
+                  lcd_puts(">OK ");
                   sendbuffer[DATA_START_BYTE -1] = 11;
                   /*
                    for (paketindex=0;paketindex< PACKET_SIZE;paketindex++) // 48 bytes fuer sendbuffer
@@ -1892,7 +1907,11 @@ int main (void)
                   lcd_gotoxy(14,1);
                   lcd_puts(">err");
                }
-               sendbuffer[3] = 0; //
+               
+               // old
+               sendbuffer[3] = 0;
+               
+               //sendbuffer[PACKETCOUNT_BYTE] = 0; //
                sendbuffer[1] = readerr;
                uint8_t usberfolg = usb_rawhid_send((void*)sendbuffer, 50);
                lcd_gotoxy(18,1);
@@ -1920,16 +1939,24 @@ int main (void)
                //lcd_puthex(recvbuffer[2]); // startblock hi
                //lcd_putc(' ');
                lcd_putc(' ');
-               lcd_puthex(recvbuffer[3]); // packetcount
+               lcd_puthex(recvbuffer[PACKETCOUNT_BYTE]); // packetcount
+               
+               // old
                uint8_t packetcount = recvbuffer[3];
+
+               //uint8_t packetcount = recvbuffer[PACKETCOUNT_BYTE];
+               
+               
+               
                uint8_t paketindex = 0;
                for (paketindex=0;paketindex< PACKET_SIZE;paketindex++) // 48 bytes fuer sendbuffer
                {
                   sendbuffer[DATA_START_BYTE + paketindex] = mmcbuffer[(packetcount*PACKET_SIZE)+paketindex];
                }
                
-               
+               // Old
                sendbuffer[3] = ++packetcount; //
+               //sendbuffer[PACKETCOUNT_BYTE] = ++packetcount; //
                
                uint8_t usberfolg = usb_rawhid_send((void*)sendbuffer, 50);
                lcd_gotoxy(18,2);
@@ -1951,7 +1978,11 @@ int main (void)
                mmcwritecounter = 0;
                usbstatus = 0;
                sendbuffer[0] = LOGGER_STOP;
+               
+               // old
                sendbuffer[3] = 0; // packetcount
+
+               //sendbuffer[PACKETCOUNT_BYTE] = 0; // packetcount
                
             }break;
                
@@ -1974,7 +2005,7 @@ int main (void)
             }break;
                
                // MARK: USB_STOP
-            case USB_STOP:
+            case USB_STOP: // Host ist ausgeschaltet
             {
                lcd_clr_line(2);
                lcd_gotoxy(0,2);
@@ -2000,8 +2031,8 @@ int main (void)
                lcd_puthex(code); // code
                lcd_putc(' ');
                lcd_putint12(intervall);
-               lcd_gotoxy(8,3);
-               lcd_puts("start ");
+               lcd_gotoxy(6,3);
+               lcd_puts("set  ");
                
                
             }break;
@@ -2028,13 +2059,23 @@ int main (void)
                abschnittnummer = recvbuffer[ABSCHNITT_BYTE]; // Abschnitt,
                
                blockcounter = recvbuffer[BLOCKOFFSETLO_BYTE] | (recvbuffer[BLOCKOFFSETHI_BYTE]<<8);
-               
+
                lcd_putc(' ');
-               lcd_putint12(saveSDposition);
-               lcd_gotoxy(8,3);
+               lcd_puthex(blockcounter);
+
+               lcd_putc(' ');
+               lcd_puthex(usbstatus1);
+               lcd_putc(' ');
+               lcd_puthex(saveSDposition);
+               
+               lcd_gotoxy(6,3);
                lcd_puts("start ");
+               lcd_puthex(saveSDposition);
+              lcd_putc(' ');
                lcd_puthex(mmcbuffer[saveSDposition]);
-               delay_ms(200);
+               lcd_putc('*');
+               //delay_ms(200);
+            
             }break;
                
                // MARK: MESSUNG_STOP
@@ -2050,7 +2091,7 @@ int main (void)
                usbstatus1 = recvbuffer[1];
                sendbuffer[BLOCKOFFSETLO_BYTE] = blockcounter & 0x00FF;
                sendbuffer[BLOCKOFFSETHI_BYTE] = (blockcounter & 0x00FF)>>8;
-               lcd_gotoxy(8,3);
+               lcd_gotoxy(6,3);
                lcd_puts("stop ");
                
             }break;
