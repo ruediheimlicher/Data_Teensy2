@@ -1875,9 +1875,9 @@ int main (void)
                uint8_t paketindex = 0;
                
                // old
-               uint8_t packetcount = recvbuffer[3] ;// laufender Index Paket, beim Start 0
+              // uint8_t packetcount = recvbuffer[3] ;// laufender Index Paket, beim Start 0
 
-              // uint8_t packetcount = recvbuffer[PACKETCOUNT_BYTE] ;// laufender Index Paket, beim Start 0
+              uint8_t packetcount = recvbuffer[PACKETCOUNT_BYTE] ;// laufender Index Paket, beim Start 0
 //               packetcount=0;
                // lcd_gotoxy(12,1);
                // lcd_puts(">mmc");
@@ -1909,9 +1909,9 @@ int main (void)
                }
                
                // old
-               sendbuffer[3] = 0;
+               //sendbuffer[3] = 0;
                
-               //sendbuffer[PACKETCOUNT_BYTE] = 0; //
+               sendbuffer[PACKETCOUNT_BYTE] = 0; //
                sendbuffer[1] = readerr;
                uint8_t usberfolg = usb_rawhid_send((void*)sendbuffer, 50);
                lcd_gotoxy(18,1);
@@ -1942,9 +1942,9 @@ int main (void)
                lcd_puthex(recvbuffer[PACKETCOUNT_BYTE]); // packetcount
                
                // old
-               uint8_t packetcount = recvbuffer[3];
+               //uint8_t packetcount = recvbuffer[3];
 
-               //uint8_t packetcount = recvbuffer[PACKETCOUNT_BYTE];
+               uint8_t packetcount = recvbuffer[PACKETCOUNT_BYTE];
                
                
                
@@ -1955,8 +1955,8 @@ int main (void)
                }
                
                // Old
-               sendbuffer[3] = ++packetcount; //
-               //sendbuffer[PACKETCOUNT_BYTE] = ++packetcount; //
+               //sendbuffer[3] = ++packetcount; //
+               sendbuffer[PACKETCOUNT_BYTE] = ++packetcount; //
                
                uint8_t usberfolg = usb_rawhid_send((void*)sendbuffer, 50);
                lcd_gotoxy(18,2);
@@ -1980,9 +1980,9 @@ int main (void)
                sendbuffer[0] = LOGGER_STOP;
                
                // old
-               sendbuffer[3] = 0; // packetcount
+               //sendbuffer[3] = 0; // packetcount
 
-               //sendbuffer[PACKETCOUNT_BYTE] = 0; // packetcount
+               sendbuffer[PACKETCOUNT_BYTE] = 0; // packetcount
                
             }break;
                
