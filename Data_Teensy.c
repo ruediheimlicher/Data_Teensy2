@@ -1449,7 +1449,9 @@ int main (void)
           */
          if (usbstatus1 & (1<<SAVE_SD_RUN_BIT)) // Daten in mmcbuffer speichern, immer 2 bytes
          {
-            
+            lcd_gotoxy(6,3);
+            lcd_puts("store ");
+
             lcd_gotoxy(8,1);
             lcd_putint(saveSDposition); // 0 .. 255, pos im mmcbuffer, immer 2 byte pro messung
             
@@ -2059,6 +2061,8 @@ int main (void)
                abschnittnummer = recvbuffer[ABSCHNITT_BYTE]; // Abschnitt,
                
                blockcounter = recvbuffer[BLOCKOFFSETLO_BYTE] | (recvbuffer[BLOCKOFFSETHI_BYTE]<<8);
+
+               intervall = recvbuffer[TAKT_LO_BYTE] | (recvbuffer[TAKT_HI_BYTE]<<8);
 
                lcd_putc(' ');
                lcd_puthex(blockcounter);
