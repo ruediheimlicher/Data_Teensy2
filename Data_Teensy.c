@@ -1457,7 +1457,7 @@ int main (void)
             mmcbuffer[2*saveSDposition+1] = ((adcwert & 0xFF00)>>8);
             lcd_putc(' ');
             lcd_putint12(mmcwritecounter % 0x800);
-            lcd_putc(' ');
+            lcd_putc('b');
             lcd_puthex(blockcounter);
 
             if (saveSDposition == 0) // Data an 0
@@ -1491,7 +1491,7 @@ int main (void)
             usbstatus1 &= ~(1<<SAVE_SD_RUN_BIT);   // fortlaufendes Schreiben beenden
             // Daten sichern
             // ** DIFF writeerr = mmc_disk_write ((void*)mmcbuffer,1 + blockcounter,1); // Block 1 ist system
-            writeerr = mmc_disk_write ((void*)mmcbuffer,1 ,1); // Block 1 ist system
+            writeerr = mmc_disk_write ((void*)mmcbuffer,1 + blockcounter,1); // Block 1 ist system
             // OSZIA_HI;
             
             lcd_gotoxy(6,3);
@@ -1885,7 +1885,7 @@ int main (void)
                lcd_puthex(startblock);
                
                // Beim Start Block aus SD lesen
-               readerr = mmc_disk_read((void*)mmcbuffer, startblock,1);
+               readerr = mmc_disk_read((void*)mmcbuffer,1+ startblock,1);
                
                
                if (readerr == 0)
