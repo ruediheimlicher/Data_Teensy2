@@ -2051,6 +2051,7 @@ int main (void)
                usbstatus = code;
                usbstatus1 = recvbuffer[1];
                
+               // usb_init();
                
                mmcwritecounter = 0;
                
