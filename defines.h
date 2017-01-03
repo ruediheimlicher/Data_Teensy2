@@ -131,7 +131,7 @@
 #define LOGGER_STOP        0xAF
 
 #define LOGGER_SETTING     0xB0 // Setzen der Settings fuer die Messungen
-#define MESSUNG_DATA        0xB1
+#define MESSUNG_DATA       0xB1
 
 
 #define USB_STOP           0xAA
