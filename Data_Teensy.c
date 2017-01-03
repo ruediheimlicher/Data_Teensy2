@@ -2063,10 +2063,10 @@ int main (void)
                abschnittnummer = recvbuffer[ABSCHNITT_BYTE]; // Abschnitt,
                
                blockcounter = recvbuffer[BLOCKOFFSETLO_BYTE] | (recvbuffer[BLOCKOFFSETHI_BYTE]<<8);
-
+               
                lcd_putc(' ');
                lcd_puthex(blockcounter);
-
+               
                lcd_putc(' ');
                lcd_puthex(usbstatus1);
                lcd_putc(' ');
@@ -2074,12 +2074,13 @@ int main (void)
                
                lcd_gotoxy(6,3);
                lcd_puts("start ");
-               lcd_puthex(saveSDposition);
-              lcd_putc(' ');
-               lcd_puthex(mmcbuffer[saveSDposition]);
-               lcd_putc('*');
-               //delay_ms(200);
-            
+               
+               /*lcd_puthex(saveSDposition);
+                lcd_putc(' ');
+                lcd_puthex(mmcbuffer[saveSDposition]);
+                lcd_putc('*');
+                //delay_ms(200);
+                */
             }break;
                
                // MARK: MESSUNG_STOP
