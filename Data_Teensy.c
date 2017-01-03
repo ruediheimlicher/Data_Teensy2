@@ -110,6 +110,9 @@ volatile uint8_t                   eepromsavestatus = 0;
 
 volatile uint8_t                    in_taskcounter=0;
 volatile uint8_t                    out_taskcounter=0;
+
+volatile uint16_t                   startblock = 0;
+
 volatile uint8_t                    packetcount = 0;
 
 // counter fuer Mess-Intervall
@@ -1869,9 +1872,9 @@ int main (void)
                lcd_puthex(recvbuffer[3]); // packetcount
                
                // old
-               uint16_t startblock = recvbuffer[1] | (recvbuffer[2]<<8); // zu lesender Block auf mmc
+               //startblock = recvbuffer[1] | (recvbuffer[2]<<8); // zu lesender Block auf mmc
 
-               //uint16_t startblock = recvbuffer[BLOCKOFFSETLO_BYTE] | (recvbuffer[BLOCKOFFSETHI_BYTE]<<8); // zu lesender Block auf mmc
+               startblock = recvbuffer[BLOCKOFFSETLO_BYTE] | (recvbuffer[BLOCKOFFSETHI_BYTE]<<8); // zu lesender Block auf mmc
                uint8_t paketindex = 0;
                
                // old
@@ -1935,7 +1938,7 @@ int main (void)
                
                
                // Block lesen
-               //lcd_puthex(recvbuffer[1]); // startblock lo
+               //lcd_puthex(recvbuffer[STARTBLOC]); // startblock lo
                //lcd_puthex(recvbuffer[2]); // startblock hi
                //lcd_putc(' ');
                lcd_putc(' ');
