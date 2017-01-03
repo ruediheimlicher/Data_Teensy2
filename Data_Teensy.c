@@ -1462,7 +1462,7 @@ int main (void)
             lcd_putint12(mmcwritecounter % 0x800);
             lcd_putc('b');
             lcd_puthex(blockcounter);
-
+            
             if (saveSDposition == 0) // Data an 0
             {
                lcd_gotoxy(3,3);
@@ -1873,15 +1873,15 @@ int main (void)
                
                // old
                //startblock = recvbuffer[1] | (recvbuffer[2]<<8); // zu lesender Block auf mmc
-
+               
                startblock = recvbuffer[BLOCKOFFSETLO_BYTE] | (recvbuffer[BLOCKOFFSETHI_BYTE]<<8); // zu lesender Block auf mmc
                uint8_t paketindex = 0;
                
                // old
                //packetcount = recvbuffer[3] ;// laufender Index Paket, beim Start 0
-
-              packetcount = recvbuffer[PACKETCOUNT_BYTE] ;// laufender Index Paket, beim Start 0
-//               packetcount=0;
+               
+               packetcount = recvbuffer[PACKETCOUNT_BYTE] ;// laufender Index Paket, beim Start 0
+               //               packetcount=0;
                // lcd_gotoxy(12,1);
                // lcd_puts(">mmc");
                lcd_gotoxy(0,3);
